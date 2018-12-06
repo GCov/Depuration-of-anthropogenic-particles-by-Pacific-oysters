@@ -5,17 +5,151 @@ date: "December 6, 2018"
 output: html_document
 ---
 
-```{r}
-library(plyr)
-```
+Load the libraries we'll need
 
 ```{r}
-## Import the oyster depuration data and view it
+library(plyr)
+library(reshape2)
+library(ggplot2)
+```
+
+Import the oyster depuration data and view it.
+
+```{r}
 oysterdep <- read.csv("~/GRAD school/ACRDP/Depuration/Data/Analysis/R code/oysterdep.csv")
 
 head(oysterdep)
 ```
 
-```{r}
+Get all of the variables into the right format.
 
+```{r}
+oysterdep$id <- as.factor(oysterdep$id)
+oysterdep$sampleday <- as.factor(oysterdep$sampleday)
+oysterdep$size.cat <- as.factor(oysterdep$size.cat)
+oysterdep$Table <- as.factor(oysterdep$Table)
+oysterdep$Tank <- as.factor(oysterdep$Tank)
+oysterdep$observer <- as.factor(oysterdep$observer)
+```
+
+Make a new dataframe to work with and rename size categories.
+
+```{r}
+oysterdep2 <- oysterdep
+
+oysterdep2$size.cat <- factor(oysterdep2$size.cat, 
+                              levels=c('twentyto50', 'fiftyto100',
+                                       'onehundredto500', 'fivehundredto1000', 
+                                       'onethousandto5000'))  # reorder
+
+
+oysterdep2$size.cat <- mapvalues(oysterdep2$size.cat, 
+                                 from = c('twentyto50', 'fiftyto100', 
+                                          'onehundredto500', 
+                                          'fivehundredto1000', 
+                                          'onethousandto5000'), 
+                                 to = c('20-50', '50-100', '100-500',
+                                        '500-1000', '1000-5000'))  # rename
+summary(oysterdep2$size.cat)  # view
+```
+
+We need to melt the dataframe so that the particle types are organized by row instead of by column.
+
+```{r}
+oysterdep3 <- melt(oysterdep2,
+                   id.vars = c('id', 'sampleday', 'size.cat', 'Table', 'Tank',
+                               'species', 'DOFSample', 'length', 'width', 
+                               'depth', 'cont.weight', 'cont.dryweight', 
+                               'dry.weight', 'shell.dry.weight', 'CI',
+                               'time.in.oven', 'time.out.oven',
+                               'dat.filter', 'dat.count', 'observer'))
+
+##  Take out unnecessary columns
+
+oysterdep3 <- oysterdep3[c('id', 'sampleday', 'size.cat', 'Table', 'Tank', 
+                         'DOFSample', 'length', 'width', 'depth', 'dry.weight',
+                         'shell.dry.weight', 'CI', 'dat.filter', 'dat.count',
+                         'observer', 'variable', 'value')]
+
+head(oysterdep3)  # now 'variable' is particle category and 'value is the count'
+```
+
+Now we want to see what kind of particles we found and remove any categories that we didn't end up using.
+
+```{r}
+cat.sums <- aggregate(oysterdep3$value ~ 
+                        oysterdep3$variable, FUN = sum)  # sums everything
+print(cat.sums)
+```
+
+So we can remove the purple fibre, gray fibre, yellow fragment, purple fragment, gray fragment, brown fragment, orange fragment, and black fragment categories because we didn't count any of these.
+
+```{r}
+oysterdep4 <- subset(oysterdep3, variable != 'purp.fib' & 
+                       variable != 'gray.fib' & variable != 'yell.frag' &
+                       variable != 'purp.frag' & variable != 'gray.frag' & 
+                       variable != 'brown.frag' & variable != 'orang.frab' &
+                       variable != 'black.frag')  # removes all these rows
+
+oysterdep4$variable <- as.character(oysterdep4$variable)
+oysterdep4$variable <- as.factor(oysterdep4$variable)  # gets rid of those names
+
+summary(oysterdep4$variable)  # view
+```
+
+Let's make the category names a bit more useful for plotting
+
+```{r}
+oysterdep4$variable <- mapvalues(oysterdep4$variable,
+                                 from = c(levels(oysterdep4$variable)), 
+                                 to = c('Black fibres', 'Blue fibres', 
+                                 'Blue fragments', 'Brown fibres', 
+                                 'Clear fibres', 'Clear fragments', 
+                                 'Clear spherules', 'Green fibres',
+                                 'Green fragments', 'Orange fibres',
+                                 'Orange fragments', 'Pink fibres', 
+                                 'Pink fragments', 'Red fibres',
+                                 'Red fragments', 'Turquoise fibres', 
+                                 'Turquoise fragments', 'White spherules', 
+                                 'Yellow fibres'))
+
+## And reorder them
+oysterdep4$variable <- factor(oysterdep4$variable, 
+                              levels = c('Black fibres', 'Blue fibres',
+                                         'Brown fibres', 'Clear fibres',
+                                         'Green fibres', 'Orange fibres',
+                                         'Pink fibres', 'Red fibres',
+                                         'Turquoise fibres',
+                                         'Yellow fibres', 'Blue fragments',
+                                         'Clear fragments', 'Green fragments',
+                                         'Orange fragments', 'Pink fragments',
+                                         'Red fragments', 'Turquoise fragments',
+                                         'Clear spherules', 'White spherules'))
+
+summary(oysterdep4$variable)
+```
+
+Take total sums and plot the results.
+
+```{r}
+totalsums <- ddply(oysterdep4, c('id', 'sampleday', 'Table', 'Tank', 
+                                 'length', 'width', 'depth', 'dry.weight',
+                                 'shell.dry.weight', 'CI', 'observer'),
+                   summarise, sum = sum(value))  # adds all the counts together
+
+## Plot according to count per individual
+
+ggplot(totalsums, aes(x=sampleday , y=sum)) + 
+  geom_boxplot(position=position_dodge(), size=1) + 
+  xlab('Day') + 
+  coord_cartesian(ylim = c(0, 41)) +
+  ylab('# APs') +
+  guides(fill=FALSE) +
+  theme_bw() +
+  theme(text = element_text(size=12), 
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        strip.background = element_blank(),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank())
 ```
