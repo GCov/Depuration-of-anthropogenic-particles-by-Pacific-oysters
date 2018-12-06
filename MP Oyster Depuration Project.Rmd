@@ -1,0 +1,21 @@
+---
+title: "MP Oyster Depuration Project"
+author: "Garth C"
+date: "December 6, 2018"
+output: html_document
+---
+
+```{r}
+library(plyr)
+```
+
+```{r}
+## Import the oyster depuration data and view it
+oysterdep <- read.csv("~/GRAD school/ACRDP/Depuration/Data/Analysis/R code/oysterdep.csv")
+
+head(oysterdep)
+```
+
+```{r}
+
+```
