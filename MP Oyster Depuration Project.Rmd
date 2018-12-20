@@ -152,4 +152,20 @@ ggplot(totalsums, aes(x=sampleday , y=sum)) +
         strip.background = element_blank(),
         panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank())
+
+## Plot according to concentration (particles/dry tissue weight)
+
+ggplot(totalsums, aes(x=sampleday , y=sum/dry.weight)) + 
+  geom_boxplot(position=position_dodge(), size=1) + 
+  xlab('Day') + 
+  coord_cartesian(ylim = c(0, 20)) +
+  ylab('# APs') +
+  guides(fill=FALSE) +
+  theme_bw() +
+  theme(text = element_text(size=12), 
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        strip.background = element_blank(),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank())
 ```
