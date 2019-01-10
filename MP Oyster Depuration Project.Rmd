@@ -1,11 +1,11 @@
 ---
 title: "MP Oyster Depuration Project"
 author: "Garth C"
-date: "December 6, 2018"
+date: "January 9, 2018"
 output: html_document
 ---
 
-Load the libraries we'll need
+Load the libraries we'll need. You'll have to install these if you don't already have them.
 
 ```{r}
 library(plyr)
@@ -15,10 +15,13 @@ library(glmmADMB)
 library(MuMIn)
 ```
 
+## Load, organize, and plot data
+
 Import the oyster depuration data and view it.
 
 ```{r}
-oysterdep <- read.csv("~/GRAD school/ACRDP/Depuration/Data/Analysis/R code/oysterdep.csv")
+oysterdep <- 
+  read.csv("~/GRAD school/ACRDP/Depuration/Data/Analysis/R code/oysterdep.csv")
 
 head(oysterdep)
 ```
@@ -172,6 +175,79 @@ ggplot(totalsums, aes(x=sampleday , y=sum/dry.weight)) +
         panel.grid.minor = element_blank())
 ```
 
+Let's print out some summary stats.
+
+```{r}
+## Summary stats according to count per individual
+
+with(totalsums, tapply(sum, sampleday, mean))  # takes mean for each day
+with(totalsums, tapply(sum, sampleday, min))  # takes minimum for each day
+with(totalsums, tapply(sum, sampleday, max))  # takes maximum for each day
+with(totalsums, tapply(sum, 
+                       sampleday, sd))  # takes standard deviation for each day
+
+## Summary stats according to concentration
+
+with(totalsums, tapply(sum/dry.weight, 
+                       sampleday, mean))  # takes mean for each day
+with(totalsums, tapply(sum/dry.weight, 
+                       sampleday, min))  # takes minimum for each day
+with(totalsums, tapply(sum/dry.weight, 
+                       sampleday, max))  # takes maximum for each day
+with(totalsums, tapply(sum, 
+                       sampleday, sd))  # takes standard deviation for each day
+
+## Proportions of particles sizes
+
+sum(oysterdep4$value[oysterdep4$size.cat == '10-20'])/
+  sum(oysterdep4$value)*100  # 0%
+
+sum(oysterdep4$value[oysterdep4$size.cat == '20-50'])/
+  sum(oysterdep4$value)*100  # 0.55 %
+
+sum(oysterdep4$value[oysterdep4$size.cat == '50-100'])/
+  sum(oysterdep4$value)*100  # 3.09 %
+
+sum(oysterdep4$value[oysterdep4$size.cat == '100-500'])/
+  sum(oysterdep4$value)*100  # 41.82 %
+
+sum(oysterdep4$value[oysterdep4$size.cat == '500-1000'])/
+  sum(oysterdep4$value)*100  # 28.00 %
+
+sum(oysterdep4$value[oysterdep4$size.cat == '1000-5000'])/
+  sum(oysterdep4$value)*100  # 26.55 %
+
+
+## Sums by particle type
+
+summary(oysterdep4$variable)
+
+sum(oysterdep4$value[oysterdep4$variable == 'Blue fragments' | 
+                  oysterdep4$variable == 'Clear fragments' |
+                  oysterdep4$variable == 'Green fragments' | 
+                  oysterdep4$variable == 'Orange fragments' |
+                  oysterdep4$variable == 'Pink fragments' |
+                  oysterdep4$variable == 'Red fragments' |
+                  oysterdep4$variable == 'Turquoise fragments'])/
+  sum(oysterdep4$value) * 100
+
+sum(oysterdep4$value[oysterdep4$variable == 'Clear spherules' | 
+                  oysterdep4$variable == 'White spherules'])/
+  sum(oysterdep4$value) * 100
+
+
+## 1.45% fragments
+## 1.27% spherules
+## 97.28% fibres
+
+## This provides the percentage of total particles found accounted for by each 
+## colour/type of particles
+oystersummarytable <- with(oysterdep4, tapply(value, variable, sum))
+oystersummarytable <- oystersummarytable/sum(oysterdep4$value)*100
+print(oystersummarytable)
+```
+
+### Blanks
 Now load in the blanks dataset and set it up for plotting, same as with the oyster data set. First we load in the data.
 
 ```{r}
@@ -279,6 +355,44 @@ ggplot(totalblanksums, aes(x=DOFSample, y=sum)) +
         strip.background = element_blank(),
         panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank())
+```
+
+Now do the same summary stats for the blanks
+
+```{r}
+## Means, range, and SD
+
+with(totalblanksums, tapply(sum, DOFSample, mean))  # takes mean for each day
+with(totalblanksums, tapply(sum, DOFSample, min))  # takes minimum for each day
+with(totalblanksums, tapply(sum, DOFSample, max))  # takes maximum for each day
+with(totalblanksums, tapply(sum, 
+                       DOFSample, sd))  # takes standard deviation for each day
+
+## Proportions of particles sizes
+
+sum(depblanks4$value[depblanks4$size.cat == '10-20'])/
+  sum(depblanks4$value)*100  # 0%
+
+sum(depblanks4$value[depblanks4$size.cat == '20-50'])/
+  sum(depblanks4$value)*100  # 2.63 %
+
+sum(depblanks4$value[depblanks4$size.cat == '50-100'])/
+  sum(depblanks4$value)*100  # 2.63 %
+
+sum(depblanks4$value[depblanks4$size.cat == '100-500'])/
+  sum(depblanks4$value)*100  # 42.11 %
+
+sum(depblanks4$value[depblanks4$size.cat == '500-1000'])/
+  sum(depblanks4$value)*100  # 23.68 %
+
+sum(depblanks4$value[depblanks4$size.cat == '1000-5000'])/
+  sum(depblanks4$value)*100  # 28.95 %
+
+## This provides the percentage of total particles found accounted for by each 
+## colour/type of particles
+blanksummarytable <- with(depblanks4, tapply(value, variable, sum))
+blanksummarytable <- blanksummarytable/sum(depblanks4$value)*100
+print(blanksummarytable)
 ```
 
 Now load in the water sample data.
@@ -395,7 +509,46 @@ ggplot(totalwatersums, aes(x=day, y=sum)) +
         panel.grid.minor = element_blank())
 ```
 
-Now fit a model to the oyster data to determine differences over time
+Now run the same summary stats for the water samples.
+
+```{r}
+## Means, range, and SD
+
+with(totalwatersums, tapply(sum, day, mean))  # takes mean for each day
+with(totalwatersums, tapply(sum, day, min))  # takes minimum for each day
+with(totalwatersums, tapply(sum, day, max))  # takes maximum for each day
+with(totalwatersums, tapply(sum, 
+                       day, sd))  # takes standard deviation for each day
+
+## Proportions of particles sizes
+
+sum(depwater4$value[depwater4$size.cat == '10-20'])/
+  sum(depwater4$value)*100  # 0%
+
+sum(depwater4$value[depwater4$size.cat == '20-50'])/
+  sum(depwater4$value)*100  # 0 %
+
+sum(depwater4$value[depwater4$size.cat == '50-100'])/
+  sum(depwater4$value)*100  # 0 %
+
+sum(depwater4$value[depwater4$size.cat == '100-500'])/
+  sum(depwater4$value)*100  # 20.83 %
+
+sum(depwater4$value[depwater4$size.cat == '500-1000'])/
+  sum(depwater4$value)*100  # 31.25 %
+
+sum(depwater4$value[depwater4$size.cat == '1000-5000'])/
+  sum(depwater4$value)*100  # 47.92 %
+
+## This provides the percentage of total particles found accounted for by each 
+## colour/type of particles
+watersummarytable <- with(depwater4, tapply(value, variable, sum))
+watersummarytable <- watersummarytable/sum(depwater4$value)*100
+print(watersummarytable)
+```
+
+## MODELLING
+Now fit a generalized linear mixed model (GLMM) to the oyster data using the package glmmADMB to determine differences over time. We'll specify AP count as the response variable, sampling day as the predictor, and tank nested within table as the random, or mixed, effects. You'll notice that sample day is specified twice. The second time is to set it up as the intercept for the random effect, which will allow the linear relationship between AP sum and sampling day to vary in both slope and intercept according separately within each tank, within each table. This accounts for any the variation that may have been caused by any variables that we did not account for and may have varied somehow in different tanks and or/tables.
 
 ```{r}
 M1 <- glmmadmb(sum ~ sampleday + (sampleday | Table/Tank), family = 'poisson', 
@@ -404,13 +557,11 @@ M1 <- glmmadmb(sum ~ sampleday + (sampleday | Table/Tank), family = 'poisson',
 summary(M1) # model output
 plot(resid(M1) ~ fitted(M1)) # plot residuals vs. fitted
 plot(resid(M1) ~ totalsums$sampleday) # plot residuals vs. predictor
-qqnorm(resid(M1))
-abline(0,1)
 ```
 
 Looking at the plot of residuals vs. fitted and residuals vs. sampe day, we can see that the variance of the residuals varies according to the AP count and the sampling day. This violates the assumption of homogeneity of variance.
 
-Let's try fitting the same model but assuming a negative binomial distribution.
+Let's try fitting the same model structure, but assuming that the response variable (AP count) varies at each value of x (sampling day) according to a negative binomial distribution.
 
 ```{r}
 M2 <- glmmadmb(sum ~ sampleday + (sampleday | Table/Tank), family = 'nbinom', 
@@ -419,13 +570,11 @@ M2 <- glmmadmb(sum ~ sampleday + (sampleday | Table/Tank), family = 'nbinom',
 summary(M2) # model output
 plot(resid(M2) ~ fitted(M2)) # plot residuals vs. fitted
 plot(resid(M2) ~ totalsums$sampleday) # plot residuals vs. predictor
-qqnorm(resid(M2))
-abline(0,1)
 ```
 
 This model is a much better fit, and the variance is much more evenly distributed across the model predictions and across the predictor variable (sampling day).
 
-Now let's try pulling out the predictor (sampling day) and using the anova() function to determine whether sampling day is a significant factor in the model.
+Now let's try pulling out the predictor (sampling day) and using the anova() function to compare the first model with the null models to determine whether sampling day significantly predicts AP concentration.
 
 ```{r}
 M3 <- glmmadmb(sum ~ (sampleday | Table/Tank), family = 'nbinom', 
@@ -471,15 +620,28 @@ Day 10 is the only day not significantly different from day 5.
 So in summary:
 
 Day | 0 | 1 | 3 | 5 | 10
+-------------------------
 0   | x |sig| - |sig| sig 
+-------------------------
 1   | x | x | - |sig| sig
+-------------------------
 3   | x | x | x |sig| sig
+-------------------------
 5   | x | x | x | x | -
+-------------------------
 10  | x | x | x | x | x
 
-Now let's replot the data with asterisks used to indicate which days are significantly different from one another.
+Now let's replot the data with letters used to indicate which days are significantly different from one another. Those with different letters are statistically different.
 
 ```{r}
+
+## First we have to get the days back in the right order
+
+totalsums$sampleday <- factor(totalsums$sampleday, 
+                              levels = c("0","1","3","5", "10"))
+
+## Now plot
+
 ggplot(totalsums, aes(x=sampleday , y=sum)) + 
   geom_boxplot(position=position_dodge(), size=1) + 
   xlab('Day') + 
@@ -493,6 +655,11 @@ ggplot(totalsums, aes(x=sampleday , y=sum)) +
         strip.background = element_blank(),
         panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank()) +
-  annotate("text", x=2, y=5, label = "b")
+  annotate("text", x=1, y=27, label = "A") + 
+  annotate("text", x=2, y=32, label = "B") +
+  annotate("text", x=3, y=30, label = "A,B") +
+  annotate("text", x=4, y=7, label = "C") +
+  annotate("text", x=5, y=12, label = "C")
+
 
 ```
