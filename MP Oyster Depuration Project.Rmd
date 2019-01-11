@@ -134,7 +134,121 @@ oysterdep4$variable <- factor(oysterdep4$variable,
 summary(oysterdep4$variable)
 ```
 
-Take total sums and plot the results.
+Next let's make plots of the distribution of sizes and particle types and colours.
+
+Starting with size
+
+```{r}
+## First we need to make a new data frame of sums according to each size category
+
+oystersizesums <- ddply(oysterdep4, c('id', 'sampleday', 'size.cat', 'Table', 
+                                      'Tank', 'DOFSample', 'length', 'width',
+                                      'depth', 'dry.weight', 'shell.dry.weight',
+                                      'CI', 'dat.filter', 'dat.count', 
+                                      'observer'), summarize, sum = sum(value))
+
+
+
+## Now calculate proportions of each particle size category present in each 
+## sample and take the means for each sampling day
+
+oysterprop <- ddply(oystersizesums, 'id', transform, prop = sum/sum(sum))
+
+oysterprop2 <- subset(oysterprop, !(is.na(oysterprop["prop"])))  # remove any NAs
+
+oysterprop2$size.cat <- as.character(oysterprop2$size.cat)
+oysterprop2$size.cat <- as.factor(oysterprop2$size.cat)
+
+oysterprop3 <- ddply(oysterprop2, c("sampleday", "size.cat"), summarize,
+                     mean = mean(prop))
+
+## Put the size categories in order
+
+oysterprop3$size.cat <- factor(oysterprop3$size.cat, 
+                                  levels = c("10-20", "20-50", "50-100", 
+                                             "100-500", "500-1000", 
+                                             "1000-5000"))
+
+## Now plot
+
+ggplot(oysterprop3, aes(x=sampleday, y=100*mean, fill = size.cat)) + 
+  geom_col(size = 1) + 
+  xlab('Sampling Day') + 
+  ylab('Average percent') +
+  guides(fill=guide_legend(title="Particle size category \n (microns)")) +
+  theme_bw() +
+  scale_fill_manual(values = c("#F0E442", "#009E73", 
+                               "#56B4E9", "#0072B2", "black")) +
+  theme(legend.text = element_text(size=12), text = element_text(size=12), 
+        panel.spacing = unit(1, "lines"),  
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12, 
+                                   margin = margin(t=0, r=0, b=0, l=2)),
+        strip.background = element_blank(), 
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        strip.placement = "outside") +
+  scale_x_discrete(expand = expand_scale(0,0.5)) + 
+  scale_y_continuous(expand = expand_scale(0.03,0))
+
+```
+
+Now with particle type/colour
+
+```{r}
+## First we need to make a new data frame of sums according to each particle
+## type/colour
+
+oystertypesums <- ddply(oysterdep4, c('id', 'sampleday', 'Table', 
+                                      'Tank', 'DOFSample', 'length', 'width',
+                                      'depth', 'dry.weight', 'shell.dry.weight',
+                                      'CI', 'dat.filter', 'dat.count', 
+                                      'observer', 'variable'), summarize, 
+                        sum = sum(value))
+
+
+
+## Now calculate proportions of each particle type/colour present in each 
+## sample and take the means for each sampling day
+
+oystertypeprop <- ddply(oystertypesums, 'id', transform, prop = sum/sum(sum))
+
+oystertypeprop2 <- subset(oystertypeprop, !(is.na(oystertypeprop["prop"])))  # remove any NAs
+
+oystertypeprop2$variable <- as.character(oystertypeprop2$variable)
+oystertypeprop2$variable <- as.factor(oystertypeprop2$variable)
+
+oystertypeprop3 <- ddply(oystertypeprop2, c("sampleday", "variable"), summarize,
+                     mean = mean(prop))
+
+## Now plot
+
+ggplot(oystertypeprop3, aes(x=sampleday, y=100*mean, fill = variable)) + 
+  geom_col(size = 0.5, colour = 'black') + 
+  xlab('Sampling Day') + 
+  ylab('Average percent') +
+  guides(fill=guide_legend(title="Particle size category \n (microns)")) +
+  theme_bw() +
+  scale_fill_manual(values = c('black', 'blue', 'blue4', 'saddlebrown', 'grey40', 
+                               'grey65', 'grey90', 'green', 'green4', 
+                               'orange',  'orange3', 'pink', 'pink3', 
+                               'red', 'red3', 'turquoise', 'turquoise4', 
+                               'white', 'yellow')) +
+  theme(legend.text = element_text(size=12), text = element_text(size=12), 
+        panel.spacing = unit(1, "lines"),  
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12, 
+                                   margin = margin(t=0, r=0, b=0, l=2)),
+        strip.background = element_blank(), 
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        strip.placement = "outside") +
+  scale_x_discrete(expand = expand_scale(0,0.5)) + 
+  scale_y_continuous(expand = expand_scale(0.03,0))
+
+```
+
+Take total sums overall and plot the results.
 
 ```{r}
 totalsums <- ddply(oysterdep4, c('id', 'sampleday', 'Table', 'Tank', 
@@ -335,6 +449,111 @@ depblanks4$variable <- factor(depblanks4$variable,
 summary(depblanks4$variable)
 ```
 
+Next let's make plots of the distribution of sizes and particle types and colours.
+
+Starting with size
+
+```{r}
+## First we need to make a new data frame of sums according to each size category
+
+blankssizesums <- ddply(depblanks4, c('id', 'size.cat', 'DOFSample', 
+                                      'dat.filter', 'dat.count', 
+                                      'observer'), summarize, sum = sum(value))
+
+
+
+## Now calculate proportions of each particle size category present in each 
+## sample and take the means for each sampling day
+
+blanksprop <- ddply(blankssizesums, 'id', transform, prop = sum/sum(sum))
+
+blanksprop2 <- subset(blanksprop, !(is.na(blanksprop["prop"])))  # remove any NAs
+
+blanksprop2$size.cat <- as.character(blanksprop2$size.cat)
+blanksprop2$size.cat <- as.factor(blanksprop2$size.cat)
+
+blanksprop3 <- ddply(blanksprop2, c("DOFSample", "size.cat"), summarize,
+                     mean = mean(prop))
+
+## Put the size categories in order
+
+blanksprop3$size.cat <- factor(blanksprop3$size.cat, 
+                                  levels = c("10-20", "20-50", "50-100", 
+                                             "100-500", "500-1000", 
+                                             "1000-5000"))
+
+## Now plot
+
+ggplot(blanksprop3, aes(x=DOFSample, y=100*mean, fill = size.cat)) + 
+  geom_col(size = 1) + 
+  xlab('Sampling Day') + 
+  ylab('Average percent') +
+  guides(fill=guide_legend(title="Particle size category \n (microns)")) +
+  theme_bw() +
+  scale_fill_manual(values = c("#F0E442", "#009E73", 
+                               "#56B4E9", "#0072B2", "black")) +
+  theme(legend.text = element_text(size=12), text = element_text(size=12), 
+        panel.spacing = unit(1, "lines"),  
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12, 
+                                   margin = margin(t=0, r=0, b=0, l=2)),
+        strip.background = element_blank(), 
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        strip.placement = "outside") +
+  scale_x_discrete(expand = expand_scale(0,0.5)) + 
+  scale_y_continuous(expand = expand_scale(0.03,0))
+
+```
+
+Now with particle type/colour
+
+```{r}
+## First we need to make a new data frame of sums according to each particle
+## type/colour
+
+blankstypesums <- ddply(depblanks4, c('id', 'DOFSample', 'dat.filter', 
+                                      'dat.count', 'observer', 'variable'), 
+                        summarize, sum = sum(value))
+
+
+
+## Now calculate proportions of each particle type/colour present in each 
+## sample and take the means for each sampling day
+
+blankstypeprop <- ddply(blankstypesums, 'id', transform, prop = sum/sum(sum))
+
+blankstypeprop2 <- subset(blankstypeprop, !(is.na(blankstypeprop["prop"])))  # remove any NAs
+
+blankstypeprop2$variable <- as.character(blankstypeprop2$variable)
+blankstypeprop2$variable <- as.factor(blankstypeprop2$variable)
+
+blankstypeprop3 <- ddply(blankstypeprop2, c("DOFSample", "variable"), summarize,
+                     mean = mean(prop))
+
+## Now plot
+
+ggplot(blankstypeprop3, aes(x=DOFSample, y=100*mean, fill = variable)) + 
+  geom_col(size = 0.5, colour = 'black') + 
+  xlab('Sampling Day') + 
+  ylab('Average percent') +
+  guides(fill=guide_legend(title="Particle size category \n (microns)")) +
+  theme_bw() +
+  scale_fill_manual(values = c('blue', 'blue4', 'grey90', 'pink')) +
+  theme(legend.text = element_text(size=12), text = element_text(size=12), 
+        panel.spacing = unit(1, "lines"),  
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12, 
+                                   margin = margin(t=0, r=0, b=0, l=2)),
+        strip.background = element_blank(), 
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        strip.placement = "outside") +
+  scale_x_discrete(expand = expand_scale(0,0.5)) + 
+  scale_y_continuous(expand = expand_scale(0.03,0))
+
+```
+
 Take total sums and plot the results.
 
 ```{r}
@@ -486,6 +705,112 @@ depwater4$variable <- factor(depwater4$variable,
 summary(depwater4$variable)
 ```
 
+```{r}
+## First we need to make a new data frame of sums according to each size category
+
+depwater4$day <- factor(depwater4$day, 
+                        levels = 
+                          c('0', '1', '3', '5', '10', 'Control'))  # put in order
+
+watersizesums <- ddply(depwater4, c('id', 'day', 'size.cat', 'Table', 'Tank', 
+                                    'DOFSample', 'dat.filter', 'dat.count', 
+                                      'observer'), summarize, sum = sum(value))
+
+
+
+## Now calculate proportions of each particle size category present in each 
+## sample and take the means for each sampling day
+
+waterprop <- ddply(watersizesums, 'id', transform, prop = sum/sum(sum))
+
+waterprop2 <- subset(waterprop, !(is.na(waterprop["prop"])))  # remove any NAs
+
+waterprop2$size.cat <- as.character(waterprop2$size.cat)
+waterprop2$size.cat <- as.factor(waterprop2$size.cat)
+
+waterprop3 <- ddply(waterprop2, c("day", "size.cat"), summarize,
+                     mean = mean(prop))
+
+## Put the size categories in order
+
+waterprop3$size.cat <- factor(waterprop3$size.cat, 
+                                  levels = c("10-20", "20-50", "50-100", 
+                                             "100-500", "500-1000", 
+                                             "1000-5000"))
+
+## Now plot
+
+ggplot(waterprop3, aes(x=day, y=100*mean, fill = size.cat)) + 
+  geom_col(size = 1) + 
+  xlab('Sampling Day') + 
+  ylab('Average percent') +
+  guides(fill=guide_legend(title="Particle size category \n (microns)")) +
+  theme_bw() +
+  scale_fill_manual(values = c("#F0E442", "#009E73", 
+                               "#56B4E9", "#0072B2", "black")) +
+  theme(legend.text = element_text(size=12), text = element_text(size=12), 
+        panel.spacing = unit(1, "lines"),  
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12, 
+                                   margin = margin(t=0, r=0, b=0, l=2)),
+        strip.background = element_blank(), 
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        strip.placement = "outside") +
+  scale_x_discrete(expand = expand_scale(0,0.5)) + 
+  scale_y_continuous(expand = expand_scale(0.03,0))
+
+```
+
+Now with particle type/colour
+
+```{r}
+## First we need to make a new data frame of sums according to each particle
+## type/colour
+
+watertypesums <- ddply(depwater4, c('id', 'day', 'Table', 'Tank', 
+                                    'DOFSample', 'dat.filter', 'dat.count', 
+                                    'observer', 'variable'), 
+                        summarize, sum = sum(value))
+
+
+
+## Now calculate proportions of each particle type/colour present in each 
+## sample and take the means for each sampling day
+
+watertypeprop <- ddply(watertypesums, 'id', transform, prop = sum/sum(sum))
+
+watertypeprop2 <- subset(watertypeprop, !(is.na(watertypeprop["prop"])))  # remove any NAs
+
+watertypeprop2$variable <- as.character(watertypeprop2$variable)
+watertypeprop2$variable <- as.factor(watertypeprop2$variable)
+
+watertypeprop3 <- ddply(watertypeprop2, c("day", "variable"), summarize,
+                     mean = mean(prop))
+
+## Now plot
+
+ggplot(watertypeprop3, aes(x=day, y=100*mean, fill = variable)) + 
+  geom_col(size = 0.5, colour = 'black') + 
+  xlab('Sampling Day') + 
+  ylab('Average percent') +
+  guides(fill=guide_legend(title="Particle size category \n (microns)")) +
+  theme_bw() +
+  scale_fill_manual(values = c('blue', 'grey90', 'red', 'turquoise')) +
+  theme(legend.text = element_text(size=12), text = element_text(size=12), 
+        panel.spacing = unit(1, "lines"),  
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12, 
+                                   margin = margin(t=0, r=0, b=0, l=2)),
+        strip.background = element_blank(), 
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        strip.placement = "outside") +
+  scale_x_discrete(expand = expand_scale(0,0.5)) + 
+  scale_y_continuous(expand = expand_scale(0.03,0))
+
+```
+
 Take total sums and plot the results.
 
 ```{r}
@@ -620,15 +945,15 @@ Day 10 is the only day not significantly different from day 5.
 So in summary:
 
 Day | 0 | 1 | 3 | 5 | 10
--------------------------
+----|---|---|---|---|-----
 0   | x |sig| - |sig| sig 
--------------------------
+----|---|---|---|---|-----
 1   | x | x | - |sig| sig
--------------------------
+----|---|---|---|---|-----
 3   | x | x | x |sig| sig
--------------------------
+----|---|---|---|---|-----
 5   | x | x | x | x | -
--------------------------
+----|---|---|---|---|-----
 10  | x | x | x | x | x
 
 Now let's replot the data with letters used to indicate which days are significantly different from one another. Those with different letters are statistically different.
