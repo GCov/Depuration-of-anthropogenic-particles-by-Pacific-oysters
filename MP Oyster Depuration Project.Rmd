@@ -11,7 +11,7 @@ Load the libraries we'll need. You'll have to install these if you don't already
 library(plyr)
 library(reshape2)
 library(ggplot2)
-library(glmmADMB)
+library(glmmTMB)
 library(MuMIn)
 ```
 
@@ -134,6 +134,20 @@ oysterdep4$variable <- factor(oysterdep4$variable,
 summary(oysterdep4$variable)
 ```
 
+Let's combine all size categories below 100 microns, since we weren't very confident in identifying these size classesso it makes more sense to pool them.
+
+```{r}
+oysterdep4$size.cat <-
+  mapvalues(
+    oysterdep4$size.cat,
+    from = c('20-50', '50-100'),
+    to = c('10-100', '10-100')
+  )  ## pool <100 micron particles
+
+oysterdep4 <- ddply(oysterdep4, names(oysterdep4)[-c(17)], summarize,
+                   value = sum(value))
+```
+
 Next let's make plots of the distribution of sizes and particle types and colours.
 
 Starting with size
@@ -165,8 +179,9 @@ oysterprop3 <- ddply(oysterprop2, c("sampleday", "size.cat"), summarize,
 ## Put the size categories in order
 
 oysterprop3$size.cat <- factor(oysterprop3$size.cat, 
-                                  levels = c("10-20", "20-50", "50-100", 
-                                             "100-500", "500-1000", 
+                                  levels = c("10-100", 
+                                             "100-500", 
+                                             "500-1000", 
                                              "1000-5000"))
 
 ## Now plot
@@ -313,23 +328,17 @@ with(totalsums, tapply(sum,
 
 ## Proportions of particles sizes
 
-sum(oysterdep4$value[oysterdep4$size.cat == '10-20'])/
-  sum(oysterdep4$value)*100  # 0%
-
-sum(oysterdep4$value[oysterdep4$size.cat == '20-50'])/
-  sum(oysterdep4$value)*100  # 0.55 %
-
-sum(oysterdep4$value[oysterdep4$size.cat == '50-100'])/
-  sum(oysterdep4$value)*100  # 3.09 %
+sum(oysterdep4$value[oysterdep4$size.cat == '10-100'])/
+  sum(oysterdep4$value)*100  # 3.6 %
 
 sum(oysterdep4$value[oysterdep4$size.cat == '100-500'])/
-  sum(oysterdep4$value)*100  # 41.82 %
+  sum(oysterdep4$value)*100  # 41.8 %
 
 sum(oysterdep4$value[oysterdep4$size.cat == '500-1000'])/
-  sum(oysterdep4$value)*100  # 28.00 %
+  sum(oysterdep4$value)*100  # 28.0 %
 
 sum(oysterdep4$value[oysterdep4$size.cat == '1000-5000'])/
-  sum(oysterdep4$value)*100  # 26.55 %
+  sum(oysterdep4$value)*100  # 26.6 %
 
 
 ## Sums by particle type
@@ -350,9 +359,9 @@ sum(oysterdep4$value[oysterdep4$variable == 'Clear spherules' |
   sum(oysterdep4$value) * 100
 
 
-## 1.45% fragments
-## 1.27% spherules
-## 97.28% fibres
+## 1.5% fragments
+## 1.3% spherules
+## 97.2% fibres
 
 ## This provides the percentage of total particles found accounted for by each 
 ## colour/type of particles
@@ -449,6 +458,21 @@ depblanks4$variable <- factor(depblanks4$variable,
 summary(depblanks4$variable)
 ```
 
+Let's combine all size categories below 100 microns, since we weren't very confident in identifying these size classesso it makes more sense to pool them.
+
+```{r}
+depblanks4$size.cat <-
+  mapvalues(
+    depblanks4$size.cat,
+    from = c('20-50', '50-100'),
+    to = c('10-100', '10-100')
+  )  ## pool <100 micron particles
+
+depblanks4 <- ddply(depblanks4, names(depblanks4)[-8], summarize,
+                   value = sum(value))
+```
+
+
 Next let's make plots of the distribution of sizes and particle types and colours.
 
 Starting with size
@@ -478,7 +502,7 @@ blanksprop3 <- ddply(blanksprop2, c("DOFSample", "size.cat"), summarize,
 ## Put the size categories in order
 
 blanksprop3$size.cat <- factor(blanksprop3$size.cat, 
-                                  levels = c("10-20", "20-50", "50-100", 
+                                  levels = c("10-100", 
                                              "100-500", "500-1000", 
                                              "1000-5000"))
 
@@ -589,29 +613,268 @@ with(totalblanksums, tapply(sum,
 
 ## Proportions of particles sizes
 
-sum(depblanks4$value[depblanks4$size.cat == '10-20'])/
-  sum(depblanks4$value)*100  # 0%
-
-sum(depblanks4$value[depblanks4$size.cat == '20-50'])/
-  sum(depblanks4$value)*100  # 2.63 %
-
-sum(depblanks4$value[depblanks4$size.cat == '50-100'])/
-  sum(depblanks4$value)*100  # 2.63 %
+sum(depblanks4$value[depblanks4$size.cat == '10-100'])/
+  sum(depblanks4$value)*100  # 5.3 %
 
 sum(depblanks4$value[depblanks4$size.cat == '100-500'])/
-  sum(depblanks4$value)*100  # 42.11 %
+  sum(depblanks4$value)*100  # 42.1 %
 
 sum(depblanks4$value[depblanks4$size.cat == '500-1000'])/
-  sum(depblanks4$value)*100  # 23.68 %
+  sum(depblanks4$value)*100  # 23.7 %
 
 sum(depblanks4$value[depblanks4$size.cat == '1000-5000'])/
-  sum(depblanks4$value)*100  # 28.95 %
+  sum(depblanks4$value)*100  # 28.9 %
 
 ## This provides the percentage of total particles found accounted for by each 
 ## colour/type of particles
 blanksummarytable <- with(depblanks4, tapply(value, variable, sum))
 blanksummarytable <- blanksummarytable/sum(depblanks4$value)*100
 print(blanksummarytable)
+```
+
+Now subtract the blank counts from the appropriate size and shape categories for the oyster counts.
+
+```{r}
+library(dplyr)
+
+depblanksmean <- ddply(depblanks4, c('size.cat', 'dat.filter', 'variable'),
+                       summarize, value.b = mean(value))
+
+depblanksmean$value.b <-
+  ceiling(depblanksmean$value.b) ## Round all blank averages up to the nearest whole number
+
+oysterdep4$dat.filter <- as.factor(oysterdep4$dat.filter)
+depblanks4$dat.filter <- as.factor(depblanks4$dat.filter)
+
+oysterdep5 <-
+  left_join(oysterdep4, depblanksmean, 
+            by = c('dat.filter', 'size.cat', 'variable')) ## Join the 2 dataframes
+
+oysterdep5$value.b <- as.numeric(oysterdep5$value.b)
+oysterdep5$value.b[is.na(oysterdep5$value.b)] <- 0
+
+oysterdep4$variable <- as.factor(oysterdep4$variable)
+
+oysterdep5$finalcount <- (oysterdep5$value - oysterdep5$value.b)
+
+oysterdep5$finalcount[oysterdep5$finalcount < 0] <-
+  0 ## Change any negative values to 0
+
+summary(oysterdep5$finalcount)
+
+```
+
+Now run all of the same code again but for the modified oyster counts.
+
+```{r}
+## First we need to make a new data frame of sums according to each size category
+
+oystersizesums2 <- ddply(oysterdep5, c('id', 'sampleday', 'size.cat', 'Table', 
+                                      'Tank', 'DOFSample', 'length', 'width',
+                                      'depth', 'dry.weight', 'shell.dry.weight',
+                                      'CI', 'dat.filter', 'dat.count', 
+                                      'observer'), summarize, sum = sum(finalcount))
+
+
+
+## Now calculate proportions of each particle size category present in each 
+## sample and take the means for each sampling day
+
+oysterprop4 <- ddply(oystersizesums2, 'id', transform, prop = sum/sum(sum))
+
+oysterprop5 <- subset(oysterprop4, !(is.na(oysterprop4["prop"])))  # remove any NAs
+
+oysterprop5$size.cat <- as.character(oysterprop5$size.cat)
+oysterprop5$size.cat <- as.factor(oysterprop5$size.cat)
+
+oysterprop6 <- ddply(oysterprop5, c("sampleday", "size.cat"), summarize,
+                     mean = mean(prop))
+
+
+## Now plot
+
+ggplot(oysterprop6, aes(x=sampleday, y=100*mean, fill = size.cat)) + 
+  geom_col(size = 1) + 
+  xlab('Sampling Day') + 
+  ylab('Average percent') +
+  guides(fill=guide_legend(title="Particle size category \n (microns)")) +
+  theme_bw() +
+  scale_fill_manual(values = c("#F0E442", "#009E73", 
+                               "#56B4E9", "#0072B2", "black")) +
+  theme(legend.text = element_text(size=12), text = element_text(size=12), 
+        panel.spacing = unit(1, "lines"),  
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12, 
+                                   margin = margin(t=0, r=0, b=0, l=2)),
+        strip.background = element_blank(), 
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        strip.placement = "outside") +
+  scale_x_discrete(expand = expand_scale(0,0.5)) + 
+  scale_y_continuous(expand = expand_scale(0.03,0))
+
+```
+
+Now with particle type/colour
+
+```{r}
+## First we need to make a new data frame of sums according to each particle
+## type/colour
+
+oystertypesums2 <- ddply(oysterdep5, c('id', 'sampleday', 'Table', 
+                                      'Tank', 'DOFSample', 'length', 'width',
+                                      'depth', 'dry.weight', 'shell.dry.weight',
+                                      'CI', 'dat.filter', 'dat.count', 
+                                      'observer', 'variable'), summarize, 
+                        sum = sum(finalcount))
+
+
+
+## Now calculate proportions of each particle type/colour present in each 
+## sample and take the means for each sampling day
+
+oystertypeprop4 <- ddply(oystertypesums2, 'id', transform, prop = sum/sum(sum))
+
+oystertypeprop5 <- subset(oystertypeprop4, !(is.na(oystertypeprop4["prop"])))  # remove any NAs
+
+oystertypeprop5$variable <- as.character(oystertypeprop5$variable)
+oystertypeprop5$variable <- as.factor(oystertypeprop5$variable)
+
+oystertypeprop6 <- ddply(oystertypeprop5, c("sampleday", "variable"), summarize,
+                     mean = mean(prop))
+
+## Now plot
+
+ggplot(oystertypeprop6, aes(x=sampleday, y=100*mean, fill = variable)) + 
+  geom_col(size = 0.5, colour = 'black') + 
+  xlab('Sampling Day') + 
+  ylab('Average percent') +
+  guides(fill=guide_legend(title="Particle size category \n (microns)")) +
+  theme_bw() +
+  scale_fill_manual(values = c('black', 'blue', 'blue4', 'saddlebrown', 'grey40', 
+                               'grey65', 'grey90', 'green', 'green4', 
+                               'orange',  'orange3', 'pink', 'pink3', 
+                               'red', 'red3', 'turquoise', 'turquoise4', 
+                               'white', 'yellow')) +
+  theme(legend.text = element_text(size=12), text = element_text(size=12), 
+        panel.spacing = unit(1, "lines"),  
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12, 
+                                   margin = margin(t=0, r=0, b=0, l=2)),
+        strip.background = element_blank(), 
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        strip.placement = "outside") +
+  scale_x_discrete(expand = expand_scale(0,0.5)) + 
+  scale_y_continuous(expand = expand_scale(0.03,0))
+
+```
+
+Take total sums overall and plot the results.
+
+```{r}
+totalsums2 <- ddply(oysterdep5, c('id', 'sampleday', 'Table', 'Tank', 
+                                 'length', 'width', 'depth', 'dry.weight',
+                                 'shell.dry.weight', 'CI', 'observer'),
+                   summarise, sum = sum(finalcount))  # adds all the counts together
+
+## Plot according to count per individual
+
+ggplot(totalsums2, aes(x=sampleday , y=sum)) + 
+  geom_boxplot(position=position_dodge(), size=1) + 
+  xlab('Day') + 
+  coord_cartesian(ylim = c(0, 41)) +
+  ylab('# APs') +
+  guides(fill=FALSE) +
+  theme_bw() +
+  theme(text = element_text(size=12), 
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        strip.background = element_blank(),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank())
+
+## Plot according to concentration (particles/dry tissue weight)
+
+ggplot(totalsums2, aes(x=sampleday , y=sum/dry.weight)) + 
+  geom_boxplot(position=position_dodge(), size=1) + 
+  xlab('Day') + 
+  coord_cartesian(ylim = c(0, 20)) +
+  ylab('# APs/g dry tissue') +
+  guides(fill=FALSE) +
+  theme_bw() +
+  theme(text = element_text(size=12), 
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 12),
+        strip.background = element_blank(),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank())
+```
+
+Let's print out some summary stats.
+
+```{r}
+## Summary stats according to count per individual
+
+with(totalsums2, tapply(sum, sampleday, mean))  # takes mean for each day
+with(totalsums2, tapply(sum, sampleday, min))  # takes minimum for each day
+with(totalsums2, tapply(sum, sampleday, max))  # takes maximum for each day
+with(totalsums2, tapply(sum, 
+                       sampleday, sd))  # takes standard deviation for each day
+
+## Summary stats according to concentration
+
+with(totalsums2, tapply(sum/dry.weight, 
+                       sampleday, mean))  # takes mean for each day
+with(totalsums2, tapply(sum/dry.weight, 
+                       sampleday, min))  # takes minimum for each day
+with(totalsums2, tapply(sum/dry.weight, 
+                       sampleday, max))  # takes maximum for each day
+with(totalsums2, tapply(sum, 
+                       sampleday, sd))  # takes standard deviation for each day
+
+## Proportions of particles sizes
+
+sum(oystersizesums2$sum[oystersizesums2$size.cat == '10-100'])/
+  sum(oystersizesums2$sum)*100  # 3.5 %
+
+sum(oystersizesums2$sum[oystersizesums2$size.cat == '100-500'])/
+  sum(oystersizesums2$sum)*100  # 40.2 %
+
+sum(oystersizesums2$sum[oystersizesums2$size.cat == '500-1000'])/
+  sum(oystersizesums2$sum)*100  # 28.0 %
+
+sum(oystersizesums2$sum[oystersizesums2$size.cat == '1000-5000'])/
+  sum(oystersizesums2$sum)*100  # 28.3 %
+
+
+## Sums by particle type
+
+summary(oystertypesums2$variable)
+
+sum(oystertypesums2$sum[oystertypesums2$variable == 'Blue fragments' | 
+                  oystertypesums2$variable == 'Clear fragments' |
+                  oystertypesums2$variable == 'Green fragments' | 
+                  oystertypesums2$variable == 'Orange fragments' |
+                  oystertypesums2$variable == 'Pink fragments' |
+                  oystertypesums2$variable == 'Red fragments' |
+                  oystertypesums2$variable == 'Turquoise fragments'])/
+  sum(oystertypesums2$sum) * 100
+
+sum(oystertypesums2$sum[oystertypesums2$variable == 'Clear spherules' | 
+                  oystertypesums2$variable == 'White spherules'])/
+  sum(oystertypesums2$sum) * 100
+
+
+## 1.5% fragments
+## 1.7% spherules
+## 96.8% fibres
+
+## This provides the percentage of total particles found accounted for by each 
+## colour/type of particles
+oystersummarytable <- with(oystertypesums2, tapply(sum, variable, sum))
+oystersummarytable <- oystersummarytable/sum(oystertypesums2$sum)*100
+print(oystersummarytable)
 ```
 
 Now load in the water sample data.
@@ -877,7 +1140,7 @@ Now fit a generalized linear mixed model (GLMM) to the oyster data using the pac
 
 ```{r}
 M1 <- glmmadmb(sum ~ sampleday + (sampleday | Table/Tank), family = 'poisson', 
-               data = totalsums) ## Fits a GLMM
+               data = totalsums2) ## Fits a GLMM
 
 summary(M1) # model output
 plot(resid(M1) ~ fitted(M1)) # plot residuals vs. fitted
