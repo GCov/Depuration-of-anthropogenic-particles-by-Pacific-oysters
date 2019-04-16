@@ -2,7 +2,7 @@
 title: "MP Oyster Depuration Project"
 author: "Garth C"
 date: "January 9, 2018"
-output: html_document
+output: word_document
 ---
 
 Load the libraries we'll need. You'll have to install these if you don't already have them.
