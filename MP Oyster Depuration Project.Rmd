@@ -382,6 +382,7 @@ head(depblanks)
 depblanks$id <- as.factor(depblanks$id)
 depblanks$size.cat <- as.factor(depblanks$size.cat)
 depblanks$observer <- as.factor(depblanks$observer)
+depblanks$sampleday <- as.factor(depblanks$sampleday)
 ```
 
 Now we make a new dataframe to work with and rename size categories.
@@ -409,14 +410,15 @@ Again, we melt the dataframe so that the particle types are organized by row ins
 
 ```{r}
 depblanks3 <- melt(depblanks2,
-                   id.vars = c('id', 'size.cat', 'DOFSample', 'time.in.oven', 
-                               'time.out.oven', 'dat.filter', 'dat.count', 
-                               'observer'))
+                   id.vars = c('id', 'size.cat', 'sampleday', 'DOFSample', 
+                               'time.in.oven', 'time.out.oven', 'dat.filter', 
+                               'dat.count', 'observer'))
 
 ##  Take out unnecessary columns
 
-depblanks3 <- depblanks3[c('id', 'size.cat', 'DOFSample', 'dat.filter', 'dat.count',
-                         'observer', 'variable', 'value')]
+depblanks3 <- depblanks3[c('id', 'size.cat', 'sampleday', 'DOFSample', 
+                           'dat.filter', 'dat.count', 'observer', 'variable', 
+                           'value')]
 
 head(depblanks3)  # now 'variable' is particle category and 'value is the count'
 ```
@@ -468,7 +470,7 @@ depblanks4$size.cat <-
     to = c('10-100', '10-100')
   )  ## pool <100 micron particles
 
-depblanks4 <- ddply(depblanks4, names(depblanks4)[-8], summarize,
+depblanks4 <- ddply(depblanks4, names(depblanks4)[-9], summarize,
                    value = sum(value))
 ```
 
@@ -480,8 +482,8 @@ Starting with size
 ```{r}
 ## First we need to make a new data frame of sums according to each size category
 
-blankssizesums <- ddply(depblanks4, c('id', 'size.cat', 'DOFSample', 
-                                      'dat.filter', 'dat.count', 
+blankssizesums <- ddply(depblanks4, c('id', 'size.cat', 'sampleday', 
+                                      'DOFSample',  'dat.filter', 'dat.count', 
                                       'observer'), summarize, sum = sum(value))
 
 
@@ -489,14 +491,14 @@ blankssizesums <- ddply(depblanks4, c('id', 'size.cat', 'DOFSample',
 ## Now calculate proportions of each particle size category present in each 
 ## sample and take the means for each sampling day
 
-blanksprop <- ddply(blankssizesums, 'id', transform, prop = sum/sum(sum))
+blanksprop <- ddply(blankssizesums, c('id', 'sampleday'), transform, prop = sum/sum(sum))
 
 blanksprop2 <- subset(blanksprop, !(is.na(blanksprop["prop"])))  # remove any NAs
 
 blanksprop2$size.cat <- as.character(blanksprop2$size.cat)
 blanksprop2$size.cat <- as.factor(blanksprop2$size.cat)
 
-blanksprop3 <- ddply(blanksprop2, c("DOFSample", "size.cat"), summarize,
+blanksprop3 <- ddply(blanksprop2, c("DOFSample", "sampleday", "size.cat"), summarize,
                      mean = mean(prop))
 
 ## Put the size categories in order
@@ -508,7 +510,7 @@ blanksprop3$size.cat <- factor(blanksprop3$size.cat,
 
 ## Now plot
 
-ggplot(blanksprop3, aes(x=DOFSample, y=100*mean, fill = size.cat)) + 
+ggplot(blanksprop3, aes(x=sampleday, y=100*mean, fill = size.cat)) + 
   geom_col(size = 1) + 
   xlab('Sampling Day') + 
   ylab('Average percent') +
@@ -536,28 +538,29 @@ Now with particle type/colour
 ## First we need to make a new data frame of sums according to each particle
 ## type/colour
 
-blankstypesums <- ddply(depblanks4, c('id', 'DOFSample', 'dat.filter', 
-                                      'dat.count', 'observer', 'variable'), 
+blankstypesums <- ddply(depblanks4, c('id', 'sampleday', 'DOFSample', 
+                                      'dat.filter', 'dat.count', 'observer', 
+                                      'variable'), 
                         summarize, sum = sum(value))
-
-
 
 ## Now calculate proportions of each particle type/colour present in each 
 ## sample and take the means for each sampling day
 
-blankstypeprop <- ddply(blankstypesums, 'id', transform, prop = sum/sum(sum))
+blankstypeprop <- ddply(blankstypesums, c('id', 'sampleday'), transform, 
+                        prop = sum/sum(sum))
 
 blankstypeprop2 <- subset(blankstypeprop, !(is.na(blankstypeprop["prop"])))  # remove any NAs
 
 blankstypeprop2$variable <- as.character(blankstypeprop2$variable)
 blankstypeprop2$variable <- as.factor(blankstypeprop2$variable)
 
-blankstypeprop3 <- ddply(blankstypeprop2, c("DOFSample", "variable"), summarize,
+blankstypeprop3 <- ddply(blankstypeprop2, c("DOFSample", "sampleday", 
+                                            "variable"), summarize,
                      mean = mean(prop))
 
 ## Now plot
 
-ggplot(blankstypeprop3, aes(x=DOFSample, y=100*mean, fill = variable)) + 
+ggplot(blankstypeprop3, aes(x=sampleday, y=100*mean, fill = variable)) + 
   geom_col(size = 0.5, colour = 'black') + 
   xlab('Sampling Day') + 
   ylab('Average percent') +
@@ -581,12 +584,13 @@ ggplot(blankstypeprop3, aes(x=DOFSample, y=100*mean, fill = variable)) +
 Take total sums and plot the results.
 
 ```{r}
-totalblanksums <- ddply(depblanks4, c('id', 'observer', 'dat.filter', 'DOFSample'),
+totalblanksums <- ddply(depblanks4, c('id', 'sampleday', 'observer', 
+                                      'dat.filter', 'DOFSample'),
                    summarise, sum = sum(value))  # adds all the counts together
 
 ## Plot according to count per filtration day
 
-ggplot(totalblanksums, aes(x=DOFSample, y=sum)) + 
+ggplot(totalblanksums, aes(x=sampleday, y=sum)) + 
   geom_boxplot(position=position_dodge(), size=1) + 
   xlab('Day') + 
   ylab('# APs') +
@@ -637,18 +641,16 @@ Now subtract the blank counts from the appropriate size and shape categories for
 ```{r}
 library(dplyr)
 
-depblanksmean <- ddply(depblanks4, c('size.cat', 'dat.filter', 'variable'),
+depblanksmean <- ddply(depblanks4, c('size.cat', 'sampleday', 'dat.filter', 
+                                     'variable'),
                        summarize, value.b = mean(value))
 
 depblanksmean$value.b <-
   ceiling(depblanksmean$value.b) ## Round all blank averages up to the nearest whole number
 
-oysterdep4$dat.filter <- as.factor(oysterdep4$dat.filter)
-depblanks4$dat.filter <- as.factor(depblanks4$dat.filter)
-
 oysterdep5 <-
   left_join(oysterdep4, depblanksmean, 
-            by = c('dat.filter', 'size.cat', 'variable')) ## Join the 2 dataframes
+            by = c('sampleday', 'size.cat', 'variable')) ## Join the 2 dataframes
 
 oysterdep5$value.b <- as.numeric(oysterdep5$value.b)
 oysterdep5$value.b[is.na(oysterdep5$value.b)] <- 0
@@ -672,7 +674,7 @@ Now run all of the same code again but for the modified oyster counts.
 oystersizesums2 <- ddply(oysterdep5, c('id', 'sampleday', 'size.cat', 'Table', 
                                       'Tank', 'DOFSample', 'length', 'width',
                                       'depth', 'dry.weight', 'shell.dry.weight',
-                                      'CI', 'dat.filter', 'dat.count', 
+                                      'CI', 'dat.count', 
                                       'observer'), summarize, sum = sum(finalcount))
 
 
@@ -724,7 +726,7 @@ Now with particle type/colour
 oystertypesums2 <- ddply(oysterdep5, c('id', 'sampleday', 'Table', 
                                       'Tank', 'DOFSample', 'length', 'width',
                                       'depth', 'dry.weight', 'shell.dry.weight',
-                                      'CI', 'dat.filter', 'dat.count', 
+                                      'CI', 'dat.count', 
                                       'observer', 'variable'), summarize, 
                         sum = sum(finalcount))
 
@@ -836,16 +838,16 @@ with(totalsums2, tapply(sum,
 ## Proportions of particles sizes
 
 sum(oystersizesums2$sum[oystersizesums2$size.cat == '10-100'])/
-  sum(oystersizesums2$sum)*100  # 3.5 %
+  sum(oystersizesums2$sum)*100  # 4.0 %
 
 sum(oystersizesums2$sum[oystersizesums2$size.cat == '100-500'])/
-  sum(oystersizesums2$sum)*100  # 40.2 %
+  sum(oystersizesums2$sum)*100  # 43.3 %
 
 sum(oystersizesums2$sum[oystersizesums2$size.cat == '500-1000'])/
-  sum(oystersizesums2$sum)*100  # 28.0 %
+  sum(oystersizesums2$sum)*100  # 28.5 %
 
 sum(oystersizesums2$sum[oystersizesums2$size.cat == '1000-5000'])/
-  sum(oystersizesums2$sum)*100  # 28.3 %
+  sum(oystersizesums2$sum)*100  # 24.2 %
 
 
 ## Sums by particle type
@@ -866,8 +868,8 @@ sum(oystertypesums2$sum[oystertypesums2$variable == 'Clear spherules' |
   sum(oystertypesums2$sum) * 100
 
 
-## 1.5% fragments
-## 1.7% spherules
+## 1.6% fragments
+## 1.6% spherules
 ## 96.8% fibres
 
 ## This provides the percentage of total particles found accounted for by each 
@@ -968,16 +970,156 @@ depwater4$variable <- factor(depwater4$variable,
 summary(depwater4$variable)
 ```
 
+Let's combine all size categories below 100 microns, since we weren't very confident in identifying these size classesso it makes more sense to pool them.
+
+```{r}
+depwater4$size.cat <-
+  mapvalues(
+    depwater4$size.cat,
+    from = c('20-50', '50-100'),
+    to = c('10-100', '10-100')
+  )  ## pool <100 micron particles
+
+depwater4 <- ddply(depwater4, names(depwater4)[-11], summarize,
+                   value = sum(value))
+```
+
+Now do all these same things for the water blanks.
+
+```{r}
+waterblanks <- 
+  read.csv("~/GRAD school/ACRDP/Depuration/Data/Analysis/waterblanks.csv")
+
+head(waterblanks)
+
+waterblanks$id <- as.factor(waterblanks$id)
+waterblanks$day <- as.factor(waterblanks$day)
+waterblanks$size.cat <- as.factor(waterblanks$size.cat)
+waterblanks$Table <- as.factor(waterblanks$Table)
+waterblanks$Tank <- as.factor(waterblanks$Tank)
+waterblanks$observer <- as.factor(waterblanks$observer)
+```
+
+Now we make a new dataframe to work with and rename size categories.
+
+```{r}
+waterblanks2 <- waterblanks
+
+waterblanks2$size.cat <- factor(waterblanks2$size.cat, 
+                              levels=c('twentyto50', 'fiftyto100',
+                                       'onehundredto500', 'fivehundredto1000', 
+                                       'onethousandto5000'))  # reorder
+
+
+waterblanks2$size.cat <- mapvalues(waterblanks2$size.cat, 
+                                 from = c('twentyto50', 'fiftyto100', 
+                                          'onehundredto500', 
+                                          'fivehundredto1000', 
+                                          'onethousandto5000'), 
+                                 to = c('20-50', '50-100', '100-500',
+                                        '500-1000', '1000-5000'))  # rename
+summary(waterblanks2$size.cat)  # view
+```
+
+Again, we melt the dataframe so that the particle types are organized by row instead of by column.
+
+```{r}
+waterblanks3 <- melt(waterblanks2,
+                   id.vars = c('id', 'day', 'size.cat', 'Table', 'Tank', 
+                               'DOFSample', 'time.in.oven', 'time.out.oven', 
+                               'dat.filter',  'dat.count', 'observer'))
+
+##  Take out unnecessary columns
+
+waterblanks3 <- waterblanks3[c('id', 'day', 'size.cat', 'Table', 'Tank', 'DOFSample', 
+                         'dat.filter', 'dat.count', 'observer', 'variable', 
+                         'value')]
+
+head(waterblanks3)  # now 'variable' is particle category and 'value is the count'
+```
+
+Now sum by totals across all samples and particles sizes to get an idea of what we're working with.
+
+```{r}
+cat.sums.blanks <- aggregate(waterblanks3$value ~ 
+                               waterblanks3$variable, FUN = sum)  # sums everything
+print(cat.sums.blanks)
+```
+
+So we can remove the red, yellow, green, turquoise, purple, gray, clear, pink, brown, orange, and black fibre categories, and all other categories as well.
+
+```{r}
+waterblanks4 <- subset(waterblanks3, variable == 'blu.fib')  # keep only these rows
+
+waterblanks4$variable <- as.character(waterblanks4$variable)
+waterblanks4$variable <- as.factor(waterblanks4$variable)  # gets rid of those names
+
+summary(waterblanks4$variable)  # view
+```
+
+Let's make the category names a bit more useful for plotting
+
+```{r}
+waterblanks4$variable <- mapvalues(waterblanks4$variable,
+                                 from = c(levels(waterblanks4$variable)), 
+                                 to = 'Blue fibres')
+
+summary(waterblanks4$variable)
+```
+
+Let's combine all size categories below 100 microns, since we weren't very confident in identifying these size classesso it makes more sense to pool them.
+
+```{r}
+waterblanks4$size.cat <-
+  mapvalues(
+    waterblanks4$size.cat,
+    from = c('20-50', '50-100'),
+    to = c('10-100', '10-100')
+  )  ## pool <100 micron particles
+
+waterblanks4 <- ddply(waterblanks4, names(waterblanks4)[-11], summarize,
+                   value = sum(value))
+```
+
+
+Now subtract the blank counts from the appropriate size and shape categories for the water counts.
+
+```{r}
+depwater4$dat.filter <- as.factor(depwater4$dat.filter)
+waterblanks4$dat.filter <- as.factor(waterblanks4$dat.filter)
+
+waterblanksmean <- ddply(waterblanks4, c('size.cat', 'dat.filter', 
+                                     'variable'),
+                       summarize, value.b = mean(value))
+
+depwater5 <-
+  left_join(depwater4, waterblanksmean, 
+            by = c('dat.filter', 'size.cat', 'variable')) ## Join the 2 dataframes
+
+depwater5$value.b <- as.numeric(depwater5$value.b)
+depwater5$value.b[is.na(depwater5$value.b)] <- 0
+
+depwater5$variable <- as.factor(depwater5$variable)
+
+depwater5$finalcount <- (depwater5$value - depwater5$value.b)
+
+depwater5$finalcount[depwater5$finalcount < 0] <-
+  0 ## Change any negative values to 0
+
+summary(depwater5$finalcount)
+```
+
+
 ```{r}
 ## First we need to make a new data frame of sums according to each size category
 
-depwater4$day <- factor(depwater4$day, 
+depwater5$day <- factor(depwater5$day, 
                         levels = 
                           c('0', '1', '3', '5', '10', 'Control'))  # put in order
 
-watersizesums <- ddply(depwater4, c('id', 'day', 'size.cat', 'Table', 'Tank', 
+watersizesums <- ddply(depwater5, c('id', 'day', 'size.cat', 'Table', 'Tank', 
                                     'DOFSample', 'dat.filter', 'dat.count', 
-                                      'observer'), summarize, sum = sum(value))
+                                      'observer'), summarize, sum = sum(finalcount))
 
 
 
@@ -1031,10 +1173,10 @@ Now with particle type/colour
 ## First we need to make a new data frame of sums according to each particle
 ## type/colour
 
-watertypesums <- ddply(depwater4, c('id', 'day', 'Table', 'Tank', 
+watertypesums <- ddply(depwater5, c('id', 'day', 'Table', 'Tank', 
                                     'DOFSample', 'dat.filter', 'dat.count', 
                                     'observer', 'variable'), 
-                        summarize, sum = sum(value))
+                        summarize, sum = sum(finalcount))
 
 
 
@@ -1077,9 +1219,9 @@ ggplot(watertypeprop3, aes(x=day, y=100*mean, fill = variable)) +
 Take total sums and plot the results.
 
 ```{r}
-totalwatersums <- ddply(depwater4, c('id', 'day', 'Table', 'Tank', 'observer', 
+totalwatersums <- ddply(depwater5, c('id', 'day', 'Table', 'Tank', 'observer', 
                                      'dat.filter'),
-                   summarise, sum = sum(value))  # adds all the counts together
+                   summarise, sum = sum(finalcount))  # adds all the counts together
 
 ## Plot according to count per filtration day
 
@@ -1110,23 +1252,17 @@ with(totalwatersums, tapply(sum,
 
 ## Proportions of particles sizes
 
-sum(depwater4$value[depwater4$size.cat == '10-20'])/
-  sum(depwater4$value)*100  # 0%
-
-sum(depwater4$value[depwater4$size.cat == '20-50'])/
-  sum(depwater4$value)*100  # 0 %
-
-sum(depwater4$value[depwater4$size.cat == '50-100'])/
+sum(depwater4$value[depwater4$size.cat == '10-100'])/
   sum(depwater4$value)*100  # 0 %
 
 sum(depwater4$value[depwater4$size.cat == '100-500'])/
-  sum(depwater4$value)*100  # 20.83 %
+  sum(depwater4$value)*100  # 17.8 %
 
 sum(depwater4$value[depwater4$size.cat == '500-1000'])/
-  sum(depwater4$value)*100  # 31.25 %
+  sum(depwater4$value)*100  # 31.1 %
 
 sum(depwater4$value[depwater4$size.cat == '1000-5000'])/
-  sum(depwater4$value)*100  # 47.92 %
+  sum(depwater4$value)*100  # 51.1 %
 
 ## This provides the percentage of total particles found accounted for by each 
 ## colour/type of particles
@@ -1136,11 +1272,12 @@ print(watersummarytable)
 ```
 
 ## MODELLING
-Now fit a generalized linear mixed model (GLMM) to the oyster data using the package glmmADMB to determine differences over time. We'll specify AP count as the response variable, sampling day as the predictor, and tank nested within table as the random, or mixed, effects. You'll notice that sample day is specified twice. The second time is to set it up as the intercept for the random effect, which will allow the linear relationship between AP sum and sampling day to vary in both slope and intercept according separately within each tank, within each table. This accounts for any the variation that may have been caused by any variables that we did not account for and may have varied somehow in different tanks and or/tables.
+Now fit a generalized linear mixed model (GLMM) to the oyster data using the package glmmTMB to determine differences over time. We'll specify AP count as the response variable, sampling day as the predictor, and tank nested within table as the random, or mixed, effects. You'll notice that sample day is specified twice. The second time is to set it up as the intercept for the random effect, which will allow the linear relationship between AP sum and sampling day to vary in both slope and intercept according separately within each tank, within each table. This accounts for any the variation that may have been caused by any variables that we did not account for and may have varied somehow in different tanks and or/tables.
 
 ```{r}
-M1 <- glmmadmb(sum ~ sampleday + (sampleday | Table/Tank), family = 'poisson', 
-               data = totalsums2) ## Fits a GLMM
+M1 <- glmmTMB(sum ~ sampleday + (1 | Table/Tank), 
+              family = genpois(link = 'log'), 
+              data = totalsums2) ## Fits a GLMM
 
 summary(M1) # model output
 plot(resid(M1) ~ fitted(M1)) # plot residuals vs. fitted
@@ -1152,53 +1289,58 @@ Looking at the plot of residuals vs. fitted and residuals vs. sampe day, we can 
 Let's try fitting the same model structure, but assuming that the response variable (AP count) varies at each value of x (sampling day) according to a negative binomial distribution.
 
 ```{r}
-M2 <- glmmadmb(sum ~ sampleday + (sampleday | Table/Tank), family = 'nbinom', 
-               data = totalsums) ## Fits a NB GLMM
+M2 <- glmmTMB(sum ~ sampleday + (1 | Table/Tank), family = nbinom2(), 
+               data = totalsums2) ## Fits a NB GLMM
 
 summary(M2) # model output
 plot(resid(M2) ~ fitted(M2)) # plot residuals vs. fitted
 plot(resid(M2) ~ totalsums$sampleday) # plot residuals vs. predictor
+
+## Can compare M1 and M2 using AICc
+
+AICc(M1, M2) 
+# the negative binomial model with quadratically increasing variance is a better fit
 ```
 
-This model is a much better fit, and the variance is much more evenly distributed across the model predictions and across the predictor variable (sampling day).
+The negative binomial model, which assumes that the variance of AP concentration increases quadratically with day of sampling, is a better fit.
 
 Now let's try pulling out the predictor (sampling day) and using the anova() function to compare the first model with the null models to determine whether sampling day significantly predicts AP concentration.
 
 ```{r}
-M3 <- glmmadmb(sum ~ (sampleday | Table/Tank), family = 'nbinom', 
-               data = totalsums) ## Same structure except no predictor
+M3 <- glmmTMB(sum ~ (1 | Table/Tank), family = nbinom2(), 
+               data = totalsums2) ## Same structure except no predictor
 
 anova(M2, M3) # compare the null model with the previously fitted model
 ```
 
-Sampling day is significant with a p-value of <0.001. We can now go into the model to determine which days are significantly different from each other. Looking back at the summar of M2 we can see that day 3 is the only time where the AP concentrations are not significantly different from day 0 (the reference level).
+Sampling day is significant with a p-value of <0.001. We can now go into the model to determine which days are significantly different from each other. Looking back at the summarry of M1 we can see that the AP concentrations at days 5 and 10 are both significantly different from day 0 (the reference level).
 
 Now we reorder the levels in sampleday to vary the reference level and figure out which days are significantly different from which other days.
 
 ```{r}
-totalsums$sampleday <- relevel(totalsums$sampleday, '1')
-M2 <- glmmadmb(sum ~ sampleday + (sampleday | Table/Tank), family = 'nbinom', 
-               data = totalsums) ## Fits a NB GLMM
+totalsums2$sampleday <- relevel(totalsums2$sampleday, '1')
+M2 <- glmmTMB(sum ~ sampleday + (1 | Table/Tank), family = nbinom2(), 
+               data = totalsums2) ## Fits a NB GLMM
 
 summary(M2) # model output
 ```
 
-Similarly, day 3 is the only day not significantly different from day 1.
+Similarly, days 5 and 10 are significantly different from day 1.
 
 ```{r}
-totalsums$sampleday <- relevel(totalsums$sampleday, '3')
-M2 <- glmmadmb(sum ~ sampleday + (sampleday | Table/Tank), family = 'nbinom', 
-               data = totalsums) ## Fits a NB GLMM
+totalsums2$sampleday <- relevel(totalsums2$sampleday, '3')
+M2 <- glmmTMB(sum ~ sampleday + (1 | Table/Tank), family = nbinom2(), 
+               data = totalsums2) ## Fits a NB GLMM
 
 summary(M2) # model output
 ```
 
-Only days 5 and 10 are significantly different from day 3.
+Days 5 and 10 are significantly different from day 3.
 
 ```{r}
-totalsums$sampleday <- relevel(totalsums$sampleday, '5')
-M2 <- glmmadmb(sum ~ sampleday + (sampleday | Table/Tank), family = 'nbinom', 
-               data = totalsums) ## Fits a NB GLMM
+totalsums2$sampleday <- relevel(totalsums2$sampleday, '5')
+M2 <- glmmTMB(sum ~ sampleday + (1 | Table/Tank), family = nbinom2(), 
+               data = totalsums2) ## Fits a NB GLMM
 
 summary(M2) # model output
 ```
@@ -1209,7 +1351,7 @@ So in summary:
 
 Day | 0 | 1 | 3 | 5 | 10
 ----|---|---|---|---|-----
-0   | x |sig| - |sig| sig 
+0   | x | - | - |sig| sig 
 ----|---|---|---|---|-----
 1   | x | x | - |sig| sig
 ----|---|---|---|---|-----
@@ -1225,12 +1367,12 @@ Now let's replot the data with letters used to indicate which days are significa
 
 ## First we have to get the days back in the right order
 
-totalsums$sampleday <- factor(totalsums$sampleday, 
+totalsums2$sampleday <- factor(totalsums2$sampleday, 
                               levels = c("0","1","3","5", "10"))
 
 ## Now plot
 
-ggplot(totalsums, aes(x=sampleday , y=sum)) + 
+ggplot(totalsums2, aes(x=sampleday , y=sum)) + 
   geom_boxplot(position=position_dodge(), size=1) + 
   xlab('Day') + 
   coord_cartesian(ylim = c(0, 41)) +
@@ -1244,10 +1386,10 @@ ggplot(totalsums, aes(x=sampleday , y=sum)) +
         panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank()) +
   annotate("text", x=1, y=27, label = "A") + 
-  annotate("text", x=2, y=32, label = "B") +
-  annotate("text", x=3, y=30, label = "A,B") +
-  annotate("text", x=4, y=7, label = "C") +
-  annotate("text", x=5, y=12, label = "C")
+  annotate("text", x=2, y=30, label = "A") +
+  annotate("text", x=3, y=25, label = "A") +
+  annotate("text", x=4, y=7, label = "B") +
+  annotate("text", x=5, y=12, label = "B")
 
 
 ```
