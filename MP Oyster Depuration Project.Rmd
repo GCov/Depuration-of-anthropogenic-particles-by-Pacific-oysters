@@ -87,14 +87,15 @@ cat.sums <- aggregate(oysterdep3$value ~
 print(cat.sums)
 ```
 
-So we can remove the purple fibre, gray fibre, yellow fragment, purple fragment, gray fragment, brown fragment, orange fragment, and black fragment categories because we didn't count any of these.
+So we can remove the purple fibre, gray fibre, yellow fragment, purple fragment, gray fragment, brown fragment, orange fragment, and black fragment categories because we didn't count any of these. Since we're only going to focus on fibres, we can actually remove all of the fragment categories.
 
 ```{r}
-oysterdep4 <- subset(oysterdep3, variable != 'purp.fib' & 
-                       variable != 'gray.fib' & variable != 'yell.frag' &
-                       variable != 'purp.frag' & variable != 'gray.frag' & 
-                       variable != 'brown.frag' & variable != 'orang.frab' &
-                       variable != 'black.frag')  # removes all these rows
+oysterdep4 <- subset(oysterdep3, variable == 'red.fib' | 
+                       variable == 'yell.fib' | variable == 'green.fib' |
+                       variable == 'turq.fib' | variable == 'blu.fib' | 
+                       variable == 'clear.fib' | variable == 'pink.fib' |
+                       variable == 'brown.fib' | variable == 'orang.fib' |
+                       variable == 'black.fib')  # removes all these rows
 
 oysterdep4$variable <- as.character(oysterdep4$variable)
 oysterdep4$variable <- as.factor(oysterdep4$variable)  # gets rid of those names
@@ -108,15 +109,10 @@ Let's make the category names a bit more useful for plotting
 oysterdep4$variable <- mapvalues(oysterdep4$variable,
                                  from = c(levels(oysterdep4$variable)), 
                                  to = c('Black fibres', 'Blue fibres', 
-                                 'Blue fragments', 'Brown fibres', 
-                                 'Clear fibres', 'Clear fragments', 
-                                 'Clear spherules', 'Green fibres',
-                                 'Green fragments', 'Orange fibres',
-                                 'Orange fragments', 'Pink fibres', 
-                                 'Pink fragments', 'Red fibres',
-                                 'Red fragments', 'Turquoise fibres', 
-                                 'Turquoise fragments', 'White spherules', 
-                                 'Yellow fibres'))
+                                 'Brown fibres', 'Clear fibres', 
+                                 'Green fibres','Orange fibres',
+                                 'Pink fibres', 'Red fibres',
+                                 'Turquoise fibres', 'Yellow fibres'))
 
 ## And reorder them
 oysterdep4$variable <- factor(oysterdep4$variable, 
@@ -125,11 +121,7 @@ oysterdep4$variable <- factor(oysterdep4$variable,
                                          'Green fibres', 'Orange fibres',
                                          'Pink fibres', 'Red fibres',
                                          'Turquoise fibres',
-                                         'Yellow fibres', 'Blue fragments',
-                                         'Clear fragments', 'Green fragments',
-                                         'Orange fragments', 'Pink fragments',
-                                         'Red fragments', 'Turquoise fragments',
-                                         'Clear spherules', 'White spherules'))
+                                         'Yellow fibres'))
 
 summary(oysterdep4$variable)
 ```
@@ -244,11 +236,9 @@ ggplot(oystertypeprop3, aes(x=sampleday, y=100*mean, fill = variable)) +
   ylab('Average percent') +
   guides(fill=guide_legend(title="Particle size category \n (microns)")) +
   theme_bw() +
-  scale_fill_manual(values = c('black', 'blue', 'blue4', 'saddlebrown', 'grey40', 
-                               'grey65', 'grey90', 'green', 'green4', 
-                               'orange',  'orange3', 'pink', 'pink3', 
-                               'red', 'red3', 'turquoise', 'turquoise4', 
-                               'white', 'yellow')) +
+  scale_fill_manual(values = c('black', 'blue', 'saddlebrown', 'grey90', 
+                               'green4', 'orange',  'pink', 'red', 'turquoise', 
+                               'yellow')) +
   theme(legend.text = element_text(size=12), text = element_text(size=12), 
         panel.spacing = unit(1, "lines"),  
         axis.text.x = element_text(size = 12),
@@ -277,7 +267,7 @@ ggplot(totalsums, aes(x=sampleday , y=sum)) +
   geom_boxplot(position=position_dodge(), size=1) + 
   xlab('Day') + 
   coord_cartesian(ylim = c(0, 41)) +
-  ylab('# APs') +
+  ylab('# AFs') +
   guides(fill=FALSE) +
   theme_bw() +
   theme(text = element_text(size=12), 
@@ -293,7 +283,7 @@ ggplot(totalsums, aes(x=sampleday , y=sum/dry.weight)) +
   geom_boxplot(position=position_dodge(), size=1) + 
   xlab('Day') + 
   coord_cartesian(ylim = c(0, 20)) +
-  ylab('# APs/g dry tissue') +
+  ylab('# AFs/g dry tissue') +
   guides(fill=FALSE) +
   theme_bw() +
   theme(text = element_text(size=12), 
@@ -329,39 +319,17 @@ with(totalsums, tapply(sum,
 ## Proportions of particles sizes
 
 sum(oysterdep4$value[oysterdep4$size.cat == '10-100'])/
-  sum(oysterdep4$value)*100  # 3.6 %
+  sum(oysterdep4$value)*100  
 
 sum(oysterdep4$value[oysterdep4$size.cat == '100-500'])/
-  sum(oysterdep4$value)*100  # 41.8 %
+  sum(oysterdep4$value)*100  
 
 sum(oysterdep4$value[oysterdep4$size.cat == '500-1000'])/
-  sum(oysterdep4$value)*100  # 28.0 %
+  sum(oysterdep4$value)*100 
 
 sum(oysterdep4$value[oysterdep4$size.cat == '1000-5000'])/
-  sum(oysterdep4$value)*100  # 26.6 %
+  sum(oysterdep4$value)*100
 
-
-## Sums by particle type
-
-summary(oysterdep4$variable)
-
-sum(oysterdep4$value[oysterdep4$variable == 'Blue fragments' | 
-                  oysterdep4$variable == 'Clear fragments' |
-                  oysterdep4$variable == 'Green fragments' | 
-                  oysterdep4$variable == 'Orange fragments' |
-                  oysterdep4$variable == 'Pink fragments' |
-                  oysterdep4$variable == 'Red fragments' |
-                  oysterdep4$variable == 'Turquoise fragments'])/
-  sum(oysterdep4$value) * 100
-
-sum(oysterdep4$value[oysterdep4$variable == 'Clear spherules' | 
-                  oysterdep4$variable == 'White spherules'])/
-  sum(oysterdep4$value) * 100
-
-
-## 1.5% fragments
-## 1.3% spherules
-## 97.2% fibres
 
 ## This provides the percentage of total particles found accounted for by each 
 ## colour/type of particles
@@ -431,12 +399,12 @@ cat.sums.blanks <- aggregate(depblanks3$value ~
 print(cat.sums.blanks)
 ```
 
-So we can remove the red, yellow, green turquoise, purple, gray, brown, orange, and black fibre categories, and all other categories other than blue fragements.
+So we can remove the red, yellow, green turquoise, purple, gray, brown, orange, and black fibre categories, and all non-fibre categories.
 
 ```{r}
 depblanks4 <- subset(depblanks3, c(variable == 'blu.fib' | 
-                       variable == 'clear.fib' | variable == 'pink.fib' |
-                       variable == 'blu.frag'))  # keep only these rows
+                       variable == 'clear.fib' | variable == 'pink.fib')
+                     )  # keep only these rows
 
 depblanks4$variable <- as.character(depblanks4$variable)
 depblanks4$variable <- as.factor(depblanks4$variable)  # gets rid of those names
@@ -449,13 +417,13 @@ Let's make the category names a bit more useful for plotting
 ```{r}
 depblanks4$variable <- mapvalues(depblanks4$variable,
                                  from = c(levels(depblanks4$variable)), 
-                                 to = c('Blue fibres', 'Blue fragments', 
-                                        'Clear fibres', 'Pink fibres'))
+                                 to = c('Blue fibres',  'Clear fibres', 
+                                        'Pink fibres'))
 
 ## And reorder them
 depblanks4$variable <- factor(depblanks4$variable, 
                               levels = c('Blue fibres', 'Clear fibres',
-                                         'Pink fibres', 'Blue fragments'))
+                                         'Pink fibres'))
 
 summary(depblanks4$variable)
 ```
@@ -566,7 +534,7 @@ ggplot(blankstypeprop3, aes(x=sampleday, y=100*mean, fill = variable)) +
   ylab('Average percent') +
   guides(fill=guide_legend(title="Particle size category \n (microns)")) +
   theme_bw() +
-  scale_fill_manual(values = c('blue', 'blue4', 'grey90', 'pink')) +
+  scale_fill_manual(values = c('blue', 'grey90', 'pink')) +
   theme(legend.text = element_text(size=12), text = element_text(size=12), 
         panel.spacing = unit(1, "lines"),  
         axis.text.x = element_text(size = 12),
@@ -593,7 +561,7 @@ totalblanksums <- ddply(depblanks4, c('id', 'sampleday', 'observer',
 ggplot(totalblanksums, aes(x=sampleday, y=sum)) + 
   geom_boxplot(position=position_dodge(), size=1) + 
   xlab('Day') + 
-  ylab('# APs') +
+  ylab('# AFs') +
   guides(fill=FALSE) +
   theme_bw() +
   theme(text = element_text(size=12), 
@@ -618,16 +586,16 @@ with(totalblanksums, tapply(sum,
 ## Proportions of particles sizes
 
 sum(depblanks4$value[depblanks4$size.cat == '10-100'])/
-  sum(depblanks4$value)*100  # 5.3 %
+  sum(depblanks4$value)*100 
 
 sum(depblanks4$value[depblanks4$size.cat == '100-500'])/
-  sum(depblanks4$value)*100  # 42.1 %
+  sum(depblanks4$value)*100
 
 sum(depblanks4$value[depblanks4$size.cat == '500-1000'])/
-  sum(depblanks4$value)*100  # 23.7 %
+  sum(depblanks4$value)*100
 
 sum(depblanks4$value[depblanks4$size.cat == '1000-5000'])/
-  sum(depblanks4$value)*100  # 28.9 %
+  sum(depblanks4$value)*100
 
 ## This provides the percentage of total particles found accounted for by each 
 ## colour/type of particles
@@ -753,11 +721,9 @@ ggplot(oystertypeprop6, aes(x=sampleday, y=100*mean, fill = variable)) +
   ylab('Average percent') +
   guides(fill=guide_legend(title="Particle size category \n (microns)")) +
   theme_bw() +
-  scale_fill_manual(values = c('black', 'blue', 'blue4', 'saddlebrown', 'grey40', 
-                               'grey65', 'grey90', 'green', 'green4', 
-                               'orange',  'orange3', 'pink', 'pink3', 
-                               'red', 'red3', 'turquoise', 'turquoise4', 
-                               'white', 'yellow')) +
+  scale_fill_manual(values = c('black', 'blue', 'saddlebrown', 'grey90', 
+                               'green4', 'orange',  'pink', 'red', 'turquoise', 
+                               'yellow')) +
   theme(legend.text = element_text(size=12), text = element_text(size=12), 
         panel.spacing = unit(1, "lines"),  
         axis.text.x = element_text(size = 12),
@@ -785,8 +751,8 @@ totalsums2 <- ddply(oysterdep5, c('id', 'sampleday', 'Table', 'Tank',
 ggplot(totalsums2, aes(x=sampleday , y=sum)) + 
   geom_boxplot(position=position_dodge(), size=1) + 
   xlab('Day') + 
-  coord_cartesian(ylim = c(0, 41)) +
-  ylab('# APs') +
+  coord_cartesian(ylim = c(0, 40)) +
+  ylab('# AFs') +
   guides(fill=FALSE) +
   theme_bw() +
   theme(text = element_text(size=12), 
@@ -801,8 +767,8 @@ ggplot(totalsums2, aes(x=sampleday , y=sum)) +
 ggplot(totalsums2, aes(x=sampleday , y=sum/dry.weight)) + 
   geom_boxplot(position=position_dodge(), size=1) + 
   xlab('Day') + 
-  coord_cartesian(ylim = c(0, 20)) +
-  ylab('# APs/g dry tissue') +
+  coord_cartesian(ylim = c(0, 15)) +
+  ylab('# AFs/g dry tissue') +
   guides(fill=FALSE) +
   theme_bw() +
   theme(text = element_text(size=12), 
@@ -832,45 +798,22 @@ with(totalsums2, tapply(sum/dry.weight,
                        sampleday, min))  # takes minimum for each day
 with(totalsums2, tapply(sum/dry.weight, 
                        sampleday, max))  # takes maximum for each day
-with(totalsums2, tapply(sum, 
+with(totalsums2, tapply(sum/dry.weight, 
                        sampleday, sd))  # takes standard deviation for each day
 
 ## Proportions of particles sizes
 
 sum(oystersizesums2$sum[oystersizesums2$size.cat == '10-100'])/
-  sum(oystersizesums2$sum)*100  # 4.0 %
+  sum(oystersizesums2$sum)*100
 
 sum(oystersizesums2$sum[oystersizesums2$size.cat == '100-500'])/
-  sum(oystersizesums2$sum)*100  # 43.3 %
+  sum(oystersizesums2$sum)*100
 
 sum(oystersizesums2$sum[oystersizesums2$size.cat == '500-1000'])/
-  sum(oystersizesums2$sum)*100  # 28.5 %
+  sum(oystersizesums2$sum)*100
 
 sum(oystersizesums2$sum[oystersizesums2$size.cat == '1000-5000'])/
-  sum(oystersizesums2$sum)*100  # 24.2 %
-
-
-## Sums by particle type
-
-summary(oystertypesums2$variable)
-
-sum(oystertypesums2$sum[oystertypesums2$variable == 'Blue fragments' | 
-                  oystertypesums2$variable == 'Clear fragments' |
-                  oystertypesums2$variable == 'Green fragments' | 
-                  oystertypesums2$variable == 'Orange fragments' |
-                  oystertypesums2$variable == 'Pink fragments' |
-                  oystertypesums2$variable == 'Red fragments' |
-                  oystertypesums2$variable == 'Turquoise fragments'])/
-  sum(oystertypesums2$sum) * 100
-
-sum(oystertypesums2$sum[oystertypesums2$variable == 'Clear spherules' | 
-                  oystertypesums2$variable == 'White spherules'])/
-  sum(oystertypesums2$sum) * 100
-
-
-## 1.6% fragments
-## 1.6% spherules
-## 96.8% fibres
+  sum(oystersizesums2$sum)*100
 
 ## This provides the percentage of total particles found accounted for by each 
 ## colour/type of particles
@@ -1115,7 +1058,7 @@ summary(depwater5$finalcount)
 
 depwater5$day <- factor(depwater5$day, 
                         levels = 
-                          c('0', '1', '3', '5', '10', 'Control'))  # put in order
+                          c('0', '1', '3', '5', '10'))  # put in order
 
 watersizesums <- ddply(depwater5, c('id', 'day', 'size.cat', 'Table', 'Tank', 
                                     'DOFSample', 'dat.filter', 'dat.count', 
@@ -1139,8 +1082,7 @@ waterprop3 <- ddply(waterprop2, c("day", "size.cat"), summarize,
 ## Put the size categories in order
 
 waterprop3$size.cat <- factor(waterprop3$size.cat, 
-                                  levels = c("10-20", "20-50", "50-100", 
-                                             "100-500", "500-1000", 
+                                  levels = c("10-100", "100-500", "500-1000", 
                                              "1000-5000"))
 
 ## Now plot
@@ -1151,8 +1093,7 @@ ggplot(waterprop3, aes(x=day, y=100*mean, fill = size.cat)) +
   ylab('Average percent') +
   guides(fill=guide_legend(title="Particle size category \n (microns)")) +
   theme_bw() +
-  scale_fill_manual(values = c("#F0E442", "#009E73", 
-                               "#56B4E9", "#0072B2", "black")) +
+  scale_fill_manual(values = c("#009E73", "#56B4E9", "#0072B2", "black")) +
   theme(legend.text = element_text(size=12), text = element_text(size=12), 
         panel.spacing = unit(1, "lines"),  
         axis.text.x = element_text(size = 12),
@@ -1228,7 +1169,7 @@ totalwatersums <- ddply(depwater5, c('id', 'day', 'Table', 'Tank', 'observer',
 ggplot(totalwatersums, aes(x=day, y=sum)) + 
   geom_boxplot(position=position_dodge(), size=1) + 
   xlab('Day') +
-  ylab('# APs') +
+  ylab('# AFs') +
   guides(fill=FALSE) +
   theme_bw() +
   theme(text = element_text(size=12), 
@@ -1253,16 +1194,16 @@ with(totalwatersums, tapply(sum,
 ## Proportions of particles sizes
 
 sum(depwater4$value[depwater4$size.cat == '10-100'])/
-  sum(depwater4$value)*100  # 0 %
+  sum(depwater4$value)*100
 
 sum(depwater4$value[depwater4$size.cat == '100-500'])/
-  sum(depwater4$value)*100  # 17.8 %
+  sum(depwater4$value)*100
 
 sum(depwater4$value[depwater4$size.cat == '500-1000'])/
-  sum(depwater4$value)*100  # 31.1 %
+  sum(depwater4$value)*100
 
 sum(depwater4$value[depwater4$size.cat == '1000-5000'])/
-  sum(depwater4$value)*100  # 51.1 %
+  sum(depwater4$value)*100
 
 ## This provides the percentage of total particles found accounted for by each 
 ## colour/type of particles
@@ -1272,7 +1213,7 @@ print(watersummarytable)
 ```
 
 ## MODELLING
-Now fit a generalized linear mixed model (GLMM) to the oyster data using the package glmmTMB to determine differences over time. We'll specify AP count as the response variable, sampling day as the predictor, and tank nested within table as the random, or mixed, effects. You'll notice that sample day is specified twice. The second time is to set it up as the intercept for the random effect, which will allow the linear relationship between AP sum and sampling day to vary in both slope and intercept according separately within each tank, within each table. This accounts for any the variation that may have been caused by any variables that we did not account for and may have varied somehow in different tanks and or/tables.
+Now fit a generalized linear mixed model (GLMM) to the oyster data using the package glmmTMB to determine differences over time. We'll specify AF count as the response variable, sampling day as the predictor, and tank nested within table as the random, or mixed, effects. You'll notice that sample day is specified twice. The second time is to set it up as the intercept for the random effect, which will allow the linear relationship between AP sum and sampling day to vary in both slope and intercept according separately within each tank, within each table. This accounts for any the variation that may have been caused by any variables that we did not account for and may have varied somehow in different tanks and or/tables.
 
 ```{r}
 M1 <- glmmTMB(sum ~ sampleday + (1 | Table/Tank), 
@@ -1286,10 +1227,11 @@ plot(resid(M1) ~ totalsums$sampleday) # plot residuals vs. predictor
 
 Looking at the plot of residuals vs. fitted and residuals vs. sampe day, we can see that the variance of the residuals varies according to the AP count and the sampling day. This violates the assumption of homogeneity of variance.
 
-Let's try fitting the same model structure, but assuming that the response variable (AP count) varies at each value of x (sampling day) according to a negative binomial distribution.
+Let's try fitting the same model structure, but assuming that the response variable (AF count) varies at each value of x (sampling day) according to a negative binomial distribution.
 
 ```{r}
-M2 <- glmmTMB(sum ~ sampleday + (1 | Table/Tank), family = nbinom2(), 
+M2 <- glmmTMB(sum ~ sampleday + (1 | Table/Tank), 
+              family = nbinom2(link = 'log'),
                data = totalsums2) ## Fits a NB GLMM
 
 summary(M2) # model output
@@ -1302,12 +1244,12 @@ AICc(M1, M2)
 # the negative binomial model with quadratically increasing variance is a better fit
 ```
 
-The negative binomial model, which assumes that the variance of AP concentration increases quadratically with day of sampling, is a better fit.
+The negative binomial model, which assumes that the variance of AF concentration increases quadratically with day of sampling, is a better fit.
 
 Now let's try pulling out the predictor (sampling day) and using the anova() function to compare the first model with the null models to determine whether sampling day significantly predicts AP concentration.
 
 ```{r}
-M3 <- glmmTMB(sum ~ (1 | Table/Tank), family = nbinom2(), 
+M3 <- glmmTMB(sum ~ (1 | Table/Tank), family = nbinom2(link = 'log'), 
                data = totalsums2) ## Same structure except no predictor
 
 anova(M2, M3) # compare the null model with the previously fitted model
@@ -1375,14 +1317,13 @@ totalsums2$sampleday <- factor(totalsums2$sampleday,
 ggplot(totalsums2, aes(x=sampleday , y=sum)) + 
   geom_boxplot(position=position_dodge(), size=1) + 
   xlab('Day') + 
-  coord_cartesian(ylim = c(0, 41)) +
-  ylab('# APs') +
+  coord_cartesian(ylim = c(0, 35)) +
+  ylab('# AFs') +
   guides(fill=FALSE) +
   theme_bw() +
   theme(text = element_text(size=12), 
         axis.text.x = element_text(size = 12),
         axis.text.y = element_text(size = 12),
-        strip.background = element_blank(),
         panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank()) +
   annotate("text", x=1, y=27, label = "A") + 
@@ -1390,6 +1331,22 @@ ggplot(totalsums2, aes(x=sampleday , y=sum)) +
   annotate("text", x=3, y=25, label = "A") +
   annotate("text", x=4, y=7, label = "B") +
   annotate("text", x=5, y=12, label = "B")
+```
 
+Run tests to determine whether there were significant differences in AP size according to day.
 
+```{r}
+SM1 <- glmmTMB(prop ~ size.cat*sampleday + (1 | Table/Tank), family = binomial, 
+               data = oysterprop5)
+summary(SM1)
+plot(resid(SM1) ~ fitted(SM1))
+
+SM2 <- glmmTMB(prop ~ size.cat + sampleday + (1 | Table/Tank), family = binomial, 
+               data = oysterprop5)
+
+anova(SM1, SM2)  # interaction is signficant at p = 0.04
+
+ggplot(oysterprop5) +
+  geom_violin(aes(x = sampleday, y = prop)) +
+  facet_wrap(~ size.cat)
 ```

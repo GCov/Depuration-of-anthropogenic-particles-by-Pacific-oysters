@@ -200,11 +200,11 @@ C.1 <-
     ylab('Average percent') +
     guides(fill=guide_legend(title="Particle colour and shape")) +
     theme_bw() +
-    scale_fill_manual(values = c('black', 'blue', 'blue4', 'saddlebrown', 'grey40', 
-                                 'grey65', 'grey90', 'green', 'green4', 
-                                 'orange',  'orange3', 'pink', 'pink3', 
-                                 'red', 'red3', 'turquoise', 'turquoise4', 
-                                 'white', 'yellow')) +
+    scale_fill_manual(values = c('black', 'blue', 'blue4', 'saddlebrown', 
+                                 'grey90', 'grey65', 'grey40', 'green', 
+                                 'green4', 'orange',  'orange3', 'pink', 
+                                 'pink3',  'red', 'red3', 'turquoise', 
+                                 'turquoise4', 'white', 'yellow')) +
     theme(legend.text = element_text(size=7), text = element_text(size=7),
           legend.key.size = unit(0.4, 'cm'),
           panel.spacing = unit(1, "lines"),  
