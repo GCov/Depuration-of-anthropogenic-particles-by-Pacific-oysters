@@ -1,12 +1,12 @@
 library(ggplot2)
 library(cowplot)
 
-## Figure 1
+## Figure 2
 
 Plot1 <- 
   ggplot(totalblanksums, aes(y=sum)) + 
   geom_boxplot(position=position_dodge(), size=0.5, fill = 'grey90') + 
-  ylab(expression(paste('# APs'~sample^-1))) +
+  ylab(expression(paste('# AFs'~sample^-1))) +
   guides(fill=FALSE) +
   theme_bw() +
   coord_cartesian(ylim = c(0,7)) +
@@ -45,7 +45,7 @@ Plot3 <-
   ylab('Average percent') +
   guides(fill=guide_legend(title="Particle size \ncategory (μm)")) +
   theme_bw() +
-  scale_fill_manual(values = c('blue', 'blue4', 'grey90', 'pink')) +
+  scale_fill_manual(values = c('blue', 'grey90', 'pink')) +
   theme(legend.text = element_text(size=7), text = element_text(size=7),
         legend.key.size = unit(0.4, 'cm'),
         axis.text.x = element_text(size = 7),
@@ -59,7 +59,7 @@ Plot4 <- plot_grid(Plot2, Plot3, align = 'v', nrow = 2, ncol = 1,
                rel_heights = c(1,1), labels = c('B','C'), label_size = 8)
 
 png(
-  filename = "Figure 1.png",
+  filename = "Figure 2.png",
   width = 9,
   height = 7,
   units = "cm",
@@ -79,7 +79,7 @@ A <-
   ggplot(totalwatersums, aes(x=day, y=sum)) + 
     geom_boxplot(position=position_dodge(), size=0.5, fill = 'grey90') + 
     xlab('Day') +
-    ylab(expression(paste('# APs'~L^-1))) +
+    ylab(expression(paste('# AFs'~L^-1))) +
     guides(fill=FALSE) +
     theme_bw() +
     coord_cartesian(ylim = c(0,7)) +
@@ -134,7 +134,7 @@ D <- plot_grid(B, C, align = 'v', nrow = 2, ncol = 1, rel_widths = c(1,1),
                rel_heights = c(1,1), labels = c('B','C'), label_size = 8)
 
 png(
-  filename = "Figure 2.png",
+  filename = "Figure 3.png",
   width = 9,
   height = 7,
   units = "cm",
@@ -155,7 +155,7 @@ A.1 <-
                  outlier.size = 0.5) + 
     xlab('Day') + 
     coord_cartesian(ylim = c(0, 35)) +
-    ylab(expression(paste('# APs '~ind^-1))) +
+    ylab(expression(paste('# AFs '~ind^-1))) +
     guides(fill=FALSE) +
     theme_bw() +
     theme(text = element_text(size=7), 
@@ -200,11 +200,9 @@ C.1 <-
     ylab('Average percent') +
     guides(fill=guide_legend(title="Particle colour and shape")) +
     theme_bw() +
-    scale_fill_manual(values = c('black', 'blue', 'blue4', 'saddlebrown', 
-                                 'grey90', 'grey65', 'grey40', 'green', 
-                                 'green4', 'orange',  'orange3', 'pink', 
-                                 'pink3',  'red', 'red3', 'turquoise', 
-                                 'turquoise4', 'white', 'yellow')) +
+    scale_fill_manual(values = c('black', 'blue', 'saddlebrown', 'grey90', 
+                                 'green4', 'orange',  'pink', 'red', 'turquoise', 
+                                 'yellow')) +
     theme(legend.text = element_text(size=7), text = element_text(size=7),
           legend.key.size = unit(0.4, 'cm'),
           panel.spacing = unit(1, "lines"),  
@@ -220,7 +218,7 @@ D.1 <- plot_grid(A.1, B.1, align = 'v', nrow = 2, ncol = 1, rel_widths = 1,
                rel_heights = 1, labels = c('A','B'), label_size = 8)
 
 png(
-  filename = "Figure 3.png",
+  filename = "Figure 4.png",
   width = 19,
   height = 14,
   units = "cm",
