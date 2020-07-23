@@ -21,7 +21,7 @@ Import the oyster depuration data and view it.
 
 ```{r}
 oysterdep <- 
-  read.csv("~/GRAD school/ACRDP/Depuration/Data/Analysis/R code/oysterdep.csv")
+  read.csv("oysterdep.csv")
 
 head(oysterdep)
 ```
@@ -343,7 +343,7 @@ Now load in the blanks dataset and set it up for plotting, same as with the oyst
 
 ```{r}
 depblanks <- 
-  read.csv("~/GRAD school/ACRDP/Depuration/Data/Analysis/depblanks.csv")
+  read.csv("depblanks.csv")
 
 head(depblanks)
 
@@ -826,7 +826,7 @@ Now load in the water sample data.
 
 ```{r}
 depwater <- 
-  read.csv("~/GRAD school/ACRDP/Depuration/Data/Analysis/depwater.csv")
+  read.csv("depwater.csv")
 
 head(depwater)
 
@@ -1216,21 +1216,22 @@ print(watersummarytable)
 Now fit a generalized linear mixed model (GLMM) to the oyster data using the package glmmTMB to determine differences over time. We'll specify AF count as the response variable, sampling day as the predictor, and tank nested within table as the random, or mixed, effects. You'll notice that sample day is specified twice. The second time is to set it up as the intercept for the random effect, which will allow the linear relationship between AP sum and sampling day to vary in both slope and intercept according separately within each tank, within each table. This accounts for any the variation that may have been caused by any variables that we did not account for and may have varied somehow in different tanks and or/tables.
 
 ```{r}
-M1 <- glmmTMB(sum ~ sampleday + (1 | Table/Tank), 
+M1 <- glmmTMB(sum ~ sampleday + dry.weight + (1 | Table/Tank), 
               family = genpois(link = 'log'), 
               data = totalsums2) ## Fits a GLMM
 
 summary(M1) # model output
 plot(resid(M1) ~ fitted(M1)) # plot residuals vs. fitted
+abline(0,0)
 plot(resid(M1) ~ totalsums$sampleday) # plot residuals vs. predictor
 ```
 
-Looking at the plot of residuals vs. fitted and residuals vs. sampe day, we can see that the variance of the residuals varies according to the AP count and the sampling day. This violates the assumption of homogeneity of variance.
+Looking at the plot of residuals vs. fitted and residuals vs. sample day, we can see that the variance of the residuals varies according to the AP count and the sampling day. This violates the assumption of homogeneity of variance.
 
 Let's try fitting the same model structure, but assuming that the response variable (AF count) varies at each value of x (sampling day) according to a negative binomial distribution.
 
 ```{r}
-M2 <- glmmTMB(sum ~ sampleday + (1 | Table/Tank), 
+M2 <- glmmTMB(sum ~ sampleday + dry.weight + (1 | Table/Tank), 
               family = nbinom2(link = 'log'),
                data = totalsums2) ## Fits a NB GLMM
 
@@ -1249,19 +1250,28 @@ The negative binomial model, which assumes that the variance of AF concentration
 Now let's try pulling out the predictor (sampling day) and using the anova() function to compare the first model with the null models to determine whether sampling day significantly predicts AP concentration.
 
 ```{r}
-M3 <- glmmTMB(sum ~ (1 | Table/Tank), family = nbinom2(link = 'log'), 
-               data = totalsums2) ## Same structure except no predictor
+M3 <- glmmTMB(sum ~ dry.weight + (1 | Table/Tank), family = nbinom2(link = 'log'), 
+               data = totalsums2) ## Same structure except no effect of day
 
-anova(M2, M3) # compare the null model with the previously fitted model
+M4 <- glmmTMB(sum ~ sampleday + (1 | Table/Tank), family = nbinom2(link = 'log'), 
+               data = totalsums2) ## Same structure except no effect of dry.weight
+
+anova(M2, M3)  # day is significant, p < 0.001
+anova(M2, M4)  # dry weight is not significant, p = 0.54
+AICc(M2, M4)  # better fit without dry weight, so go with M4
+
+M5 <- glmmTMB(sum ~ (1 | Table/Tank), family = nbinom2(link = 'log'), 
+               data = totalsums2) ## Null model
+anova(M4, M5)  # sample day significant, p < 0.001
 ```
 
-Sampling day is significant with a p-value of <0.001. We can now go into the model to determine which days are significantly different from each other. Looking back at the summarry of M1 we can see that the AP concentrations at days 5 and 10 are both significantly different from day 0 (the reference level).
+Sampling day is significant with a p-value of <0.001. We can now go into the model to determine which days are significantly different from each other. Looking back at the summary of M1 we can see that the AP concentrations at days 5 and 10 are both significantly different from day 0 (the reference level).
 
-Now we reorder the levels in sampleday to vary the reference level and figure out which days are significantly different from which other days.
+Now we reorder the levels in sample day to vary the reference level and figure out which days are significantly different from which other days.
 
 ```{r}
 totalsums2$sampleday <- relevel(totalsums2$sampleday, '1')
-M2 <- glmmTMB(sum ~ sampleday + (1 | Table/Tank), family = nbinom2(), 
+M5 <- glmmTMB(sum ~ sampleday + (1 | Table/Tank), family = nbinom2(), 
                data = totalsums2) ## Fits a NB GLMM
 
 summary(M2) # model output
@@ -1271,20 +1281,20 @@ Similarly, days 5 and 10 are significantly different from day 1.
 
 ```{r}
 totalsums2$sampleday <- relevel(totalsums2$sampleday, '3')
-M2 <- glmmTMB(sum ~ sampleday + (1 | Table/Tank), family = nbinom2(), 
+M5 <- glmmTMB(sum ~ sampleday + (1 | Table/Tank), family = nbinom2(), 
                data = totalsums2) ## Fits a NB GLMM
 
-summary(M2) # model output
+summary(M5) # model output
 ```
 
 Days 5 and 10 are significantly different from day 3.
 
 ```{r}
 totalsums2$sampleday <- relevel(totalsums2$sampleday, '5')
-M2 <- glmmTMB(sum ~ sampleday + (1 | Table/Tank), family = nbinom2(), 
+M5 <- glmmTMB(sum ~ sampleday + (1 | Table/Tank), family = nbinom2(), 
                data = totalsums2) ## Fits a NB GLMM
 
-summary(M2) # model output
+summary(M5) # model output
 ```
 
 Day 10 is the only day not significantly different from day 5.
@@ -1341,10 +1351,10 @@ SM1 <- glmmTMB(prop ~ size.cat*sampleday + (1 | Table/Tank), family = binomial,
 summary(SM1)
 plot(resid(SM1) ~ fitted(SM1))
 
-SM2 <- glmmTMB(prop ~ size.cat + sampleday + (1 | Table/Tank), family = binomial, 
+SM5 <- glmmTMB(prop ~ size.cat + sampleday + (1 | Table/Tank), family = binomial, 
                data = oysterprop5)
 
-anova(SM1, SM2)  # interaction is signficant at p = 0.04
+anova(SM1, SM5)  # interaction is signficant at p = 0.04
 
 ggplot(oysterprop5) +
   geom_violin(aes(x = sampleday, y = prop)) +
