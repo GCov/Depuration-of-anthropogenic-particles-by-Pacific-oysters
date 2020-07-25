@@ -87,15 +87,19 @@ cat.sums <- aggregate(oysterdep3$value ~
 print(cat.sums)
 ```
 
-So we can remove the purple fibre, gray fibre, yellow fragment, purple fragment, gray fragment, brown fragment, orange fragment, and black fragment categories because we didn't count any of these. Since we're only going to focus on fibres, we can actually remove all of the fragment categories.
+So we can remove the purple fibre, gray fibre, yellow fragment, purple fragment, gray fragment, brown fragment, orange fragment, and black fragment categories because we didn't count any of these.
 
 ```{r}
-oysterdep4 <- subset(oysterdep3, variable == 'red.fib' | 
-                       variable == 'yell.fib' | variable == 'green.fib' |
-                       variable == 'turq.fib' | variable == 'blu.fib' | 
-                       variable == 'clear.fib' | variable == 'pink.fib' |
-                       variable == 'brown.fib' | variable == 'orang.fib' |
-                       variable == 'black.fib')  # removes all these rows
+oysterdep4 <- subset(oysterdep3, 
+                     variable != 'purp.fib' &
+                       variable != 'gray.fib' &
+                       variable != 'yell.frag' &
+                       variable != 'turq.frag' &
+                       variable != 'purp.frag' &
+                       variable != 'gray.frag' &
+                       variable != 'brown.frag' &
+                       variable != 'orang.frag' &
+                       variable != 'black.frag')  # removes all these rows
 
 oysterdep4$variable <- as.character(oysterdep4$variable)
 oysterdep4$variable <- as.factor(oysterdep4$variable)  # gets rid of those names
@@ -108,25 +112,48 @@ Let's make the category names a bit more useful for plotting
 ```{r}
 oysterdep4$variable <- mapvalues(oysterdep4$variable,
                                  from = c(levels(oysterdep4$variable)), 
-                                 to = c('Black fibres', 'Blue fibres', 
-                                 'Brown fibres', 'Clear fibres', 
-                                 'Green fibres','Orange fibres',
-                                 'Pink fibres', 'Red fibres',
-                                 'Turquoise fibres', 'Yellow fibres'))
+                                 to = c('Black fibres', 
+                                        'Blue fibres', 
+                                        'Blue fragments',
+                                        'Brown fibres', 
+                                        'Clear fibres',
+                                        'Clear fragments',
+                                        'Clear spheres',
+                                        'Green fibres',
+                                        'Green fragments',
+                                        'Orange fibres',
+                                        'Pink fibres', 
+                                        'Pink fragments',
+                                        'Red fibres',
+                                        'Red fragments',
+                                        'Turquoise fibres', 
+                                        'White spheres',
+                                        'Yellow fibres'))
 
 ## And reorder them
 oysterdep4$variable <- factor(oysterdep4$variable, 
-                              levels = c('Black fibres', 'Blue fibres',
-                                         'Brown fibres', 'Clear fibres',
-                                         'Green fibres', 'Orange fibres',
-                                         'Pink fibres', 'Red fibres',
+                              levels = c('Black fibres', 
+                                         'Blue fibres',
+                                         'Brown fibres', 
+                                         'Clear fibres',
+                                         'Green fibres', 
+                                         'Orange fibres',
+                                         'Pink fibres', 
+                                         'Red fibres',
                                          'Turquoise fibres',
-                                         'Yellow fibres'))
+                                         'Yellow fibres',
+                                         'Blue fragments',
+                                         'Clear fragments',
+                                         'Green fragments',
+                                         'Pink fragments',
+                                         'Red fragments',
+                                         'Clear spheres',
+                                         'White spheres'))
 
 summary(oysterdep4$variable)
 ```
 
-Let's combine all size categories below 100 microns, since we weren't very confident in identifying these size classesso it makes more sense to pool them.
+Let's combine all size categories below 100 microns, since we weren't very confident in identifying these size classes so it makes more sense to pool them.
 
 ```{r}
 oysterdep4$size.cat <-
@@ -179,13 +206,15 @@ oysterprop3$size.cat <- factor(oysterprop3$size.cat,
 ## Now plot
 
 ggplot(oysterprop3, aes(x=sampleday, y=100*mean, fill = size.cat)) + 
-  geom_col(size = 1) + 
+  geom_col(size = 1, colour = 'black') + 
   xlab('Sampling Day') + 
   ylab('Average percent') +
   guides(fill=guide_legend(title="Particle size category \n (microns)")) +
   theme_bw() +
-  scale_fill_manual(values = c("#F0E442", "#009E73", 
-                               "#56B4E9", "#0072B2", "black")) +
+  scale_fill_manual(values = c('grey0',
+                               'grey25',
+                               'grey50',
+                               'grey75')) +
   theme(legend.text = element_text(size=12), text = element_text(size=12), 
         panel.spacing = unit(1, "lines"),  
         axis.text.x = element_text(size = 12),
@@ -195,8 +224,8 @@ ggplot(oysterprop3, aes(x=sampleday, y=100*mean, fill = size.cat)) +
         panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank(),
         strip.placement = "outside") +
-  scale_x_discrete(expand = expand_scale(0,0.5)) + 
-  scale_y_continuous(expand = expand_scale(0.03,0))
+  scale_x_discrete(expand = c(0,0.5)) + 
+  scale_y_continuous(expand = c(0.03,0))
 
 ```
 
@@ -230,26 +259,52 @@ oystertypeprop3 <- ddply(oystertypeprop2, c("sampleday", "variable"), summarize,
 
 ## Now plot
 
-ggplot(oystertypeprop3, aes(x=sampleday, y=100*mean, fill = variable)) + 
-  geom_col(size = 0.5, colour = 'black') + 
-  xlab('Sampling Day') + 
+ggplot(oystertypeprop3, aes(x = sampleday, y = 100 * mean, fill = variable)) +
+  geom_col(size = 0.5, colour = 'black') +
+  xlab('Sampling Day') +
   ylab('Average percent') +
-  guides(fill=guide_legend(title="Particle size category \n (microns)")) +
+  guides(fill = guide_legend(title = "Particle size category \n (microns)")) +
   theme_bw() +
-  scale_fill_manual(values = c('black', 'blue', 'saddlebrown', 'grey90', 
-                               'green4', 'orange',  'pink', 'red', 'turquoise', 
-                               'yellow')) +
-  theme(legend.text = element_text(size=12), text = element_text(size=12), 
-        panel.spacing = unit(1, "lines"),  
-        axis.text.x = element_text(size = 12),
-        axis.text.y = element_text(size = 12, 
-                                   margin = margin(t=0, r=0, b=0, l=2)),
-        strip.background = element_blank(), 
-        panel.grid.major = element_blank(), 
-        panel.grid.minor = element_blank(),
-        strip.placement = "outside") +
-  scale_x_discrete(expand = expand_scale(0,0.5)) + 
-  scale_y_continuous(expand = expand_scale(0.03,0))
+  scale_fill_manual(
+    values = c(
+      'Grey16',
+      'Steel Blue',
+      'Navy',
+      'Saddle Brown',
+      'Grey50',
+      'Grey75',
+      'Grey90',
+      'Forest Green',
+      'Dark Green',
+      'Orange',
+      'Pink',
+      'Hot Pink',
+      'Red',
+      'Red3',
+      'Turquoise',
+      'White',
+      'Gold'
+    )
+  ) +
+  theme(
+    legend.text = element_text(size = 12),
+    text = element_text(size = 12),
+    panel.spacing = unit(1, "lines"),
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12,
+                               margin = margin(
+                                 t = 0,
+                                 r = 0,
+                                 b = 0,
+                                 l = 2
+                               )),
+    strip.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    strip.placement = "outside"
+  ) +
+  scale_x_discrete(expand = expand_scale(0, 0.5)) +
+  scale_y_continuous(expand = expand_scale(0.03, 0))
 
 ```
 
@@ -267,7 +322,7 @@ ggplot(totalsums, aes(x=sampleday , y=sum)) +
   geom_boxplot(position=position_dodge(), size=1) + 
   xlab('Day') + 
   coord_cartesian(ylim = c(0, 41)) +
-  ylab('# AFs') +
+  ylab('# APs') +
   guides(fill=FALSE) +
   theme_bw() +
   theme(text = element_text(size=12), 
@@ -283,7 +338,7 @@ ggplot(totalsums, aes(x=sampleday , y=sum/dry.weight)) +
   geom_boxplot(position=position_dodge(), size=1) + 
   xlab('Day') + 
   coord_cartesian(ylim = c(0, 20)) +
-  ylab('# AFs/g dry tissue') +
+  ylab('# APs/g dry tissue') +
   guides(fill=FALSE) +
   theme_bw() +
   theme(text = element_text(size=12), 
@@ -299,7 +354,7 @@ Let's print out some summary stats.
 ```{r}
 ## Summary stats according to count per individual
 
-with(totalsums, tapply(sum, sampleday, mean))  # takes mean for each day
+with(totalsums, tapply(sum, sampleday, median))  # takes c for each day
 with(totalsums, tapply(sum, sampleday, min))  # takes minimum for each day
 with(totalsums, tapply(sum, sampleday, max))  # takes maximum for each day
 with(totalsums, tapply(sum, 
@@ -308,7 +363,7 @@ with(totalsums, tapply(sum,
 ## Summary stats according to concentration
 
 with(totalsums, tapply(sum/dry.weight, 
-                       sampleday, mean))  # takes mean for each day
+                       sampleday, median))  # takes median for each day
 with(totalsums, tapply(sum/dry.weight, 
                        sampleday, min))  # takes minimum for each day
 with(totalsums, tapply(sum/dry.weight, 
@@ -399,11 +454,14 @@ cat.sums.blanks <- aggregate(depblanks3$value ~
 print(cat.sums.blanks)
 ```
 
-So we can remove the red, yellow, green turquoise, purple, gray, brown, orange, and black fibre categories, and all non-fibre categories.
+So we can remove the red, yellow, green turquoise, purple, gray, brown, orange, and black fibre categories, and all non-fibre categories other than blue frags.
 
 ```{r}
-depblanks4 <- subset(depblanks3, c(variable == 'blu.fib' | 
-                       variable == 'clear.fib' | variable == 'pink.fib')
+depblanks4 <- subset(depblanks3, 
+                     c(variable == 'blu.fib' | 
+                         variable == 'clear.fib' | 
+                         variable == 'pink.fib' |
+                         variable == 'blu.frag')
                      )  # keep only these rows
 
 depblanks4$variable <- as.character(depblanks4$variable)
@@ -417,13 +475,15 @@ Let's make the category names a bit more useful for plotting
 ```{r}
 depblanks4$variable <- mapvalues(depblanks4$variable,
                                  from = c(levels(depblanks4$variable)), 
-                                 to = c('Blue fibres',  'Clear fibres', 
+                                 to = c('Blue fibres',  
+                                        'Blue fragments',
+                                        'Clear fibres', 
                                         'Pink fibres'))
 
 ## And reorder them
 depblanks4$variable <- factor(depblanks4$variable, 
                               levels = c('Blue fibres', 'Clear fibres',
-                                         'Pink fibres'))
+                                         'Pink fibres', 'Blue fragments'))
 
 summary(depblanks4$variable)
 ```
@@ -479,13 +539,12 @@ blanksprop3$size.cat <- factor(blanksprop3$size.cat,
 ## Now plot
 
 ggplot(blanksprop3, aes(x=sampleday, y=100*mean, fill = size.cat)) + 
-  geom_col(size = 1) + 
+  geom_col(size = 1, colour = 'black') + 
   xlab('Sampling Day') + 
   ylab('Average percent') +
   guides(fill=guide_legend(title="Particle size category \n (microns)")) +
   theme_bw() +
-  scale_fill_manual(values = c("#F0E442", "#009E73", 
-                               "#56B4E9", "#0072B2", "black")) +
+  scale_fill_manual(values = c('grey0', 'grey25', 'grey50', 'grey75')) +
   theme(legend.text = element_text(size=12), text = element_text(size=12), 
         panel.spacing = unit(1, "lines"),  
         axis.text.x = element_text(size = 12),
@@ -534,7 +593,7 @@ ggplot(blankstypeprop3, aes(x=sampleday, y=100*mean, fill = variable)) +
   ylab('Average percent') +
   guides(fill=guide_legend(title="Particle size category \n (microns)")) +
   theme_bw() +
-  scale_fill_manual(values = c('blue', 'grey90', 'pink')) +
+  scale_fill_manual(values = c('Steel Blue', 'Navy', 'Grey50', 'Pink')) +
   theme(legend.text = element_text(size=12), text = element_text(size=12), 
         panel.spacing = unit(1, "lines"),  
         axis.text.x = element_text(size = 12),
@@ -561,7 +620,7 @@ totalblanksums <- ddply(depblanks4, c('id', 'sampleday', 'observer',
 ggplot(totalblanksums, aes(x=sampleday, y=sum)) + 
   geom_boxplot(position=position_dodge(), size=1) + 
   xlab('Day') + 
-  ylab('# AFs') +
+  ylab('# APs') +
   guides(fill=FALSE) +
   theme_bw() +
   theme(text = element_text(size=12), 
