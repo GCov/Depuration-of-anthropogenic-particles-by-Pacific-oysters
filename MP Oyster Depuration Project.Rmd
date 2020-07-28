@@ -4,7 +4,7 @@ author: "Garth C"
 date: "January 9, 2018"
 output: word_document
 ---
-
+## Load libraries
 Load the libraries we'll need. You'll have to install these if you don't already have them.
 
 ```{r}
@@ -13,9 +13,11 @@ library(reshape2)
 library(ggplot2)
 library(glmmTMB)
 library(MuMIn)
+library(lme4)
+library(dotwhisker)
 ```
 
-## Load, organize, and plot data
+## Oyster data
 
 Import the oyster depuration data and view it.
 
@@ -91,15 +93,20 @@ So we can remove the purple fibre, gray fibre, yellow fragment, purple fragment,
 
 ```{r}
 oysterdep4 <- subset(oysterdep3, 
-                     variable != 'purp.fib' &
+                     variable != 'green.fib' &
+                       variable != 'purp.fib' &
                        variable != 'gray.fib' &
+                       variable != 'brown.fib' &
                        variable != 'yell.frag' &
                        variable != 'turq.frag' &
                        variable != 'purp.frag' &
                        variable != 'gray.frag' &
+                       variable != 'clear.frag' &
+                       variable != 'pink.frag' &
                        variable != 'brown.frag' &
                        variable != 'orang.frag' &
-                       variable != 'black.frag')  # removes all these rows
+                       variable != 'black.frag' &
+                       variable != 'clear.spher')  # removes all these rows
 
 oysterdep4$variable <- as.character(oysterdep4$variable)
 oysterdep4$variable <- as.factor(oysterdep4$variable)  # gets rid of those names
@@ -115,40 +122,15 @@ oysterdep4$variable <- mapvalues(oysterdep4$variable,
                                  to = c('Black fibres', 
                                         'Blue fibres', 
                                         'Blue fragments',
-                                        'Brown fibres', 
                                         'Clear fibres',
-                                        'Clear fragments',
-                                        'Clear spheres',
-                                        'Green fibres',
                                         'Green fragments',
                                         'Orange fibres',
-                                        'Pink fibres', 
-                                        'Pink fragments',
+                                        'Pink fibres',
                                         'Red fibres',
                                         'Red fragments',
                                         'Turquoise fibres', 
                                         'White spheres',
                                         'Yellow fibres'))
-
-## And reorder them
-oysterdep4$variable <- factor(oysterdep4$variable, 
-                              levels = c('Black fibres', 
-                                         'Blue fibres',
-                                         'Brown fibres', 
-                                         'Clear fibres',
-                                         'Green fibres', 
-                                         'Orange fibres',
-                                         'Pink fibres', 
-                                         'Red fibres',
-                                         'Turquoise fibres',
-                                         'Yellow fibres',
-                                         'Blue fragments',
-                                         'Clear fragments',
-                                         'Green fragments',
-                                         'Pink fragments',
-                                         'Red fragments',
-                                         'Clear spheres',
-                                         'White spheres'))
 
 summary(oysterdep4$variable)
 ```
@@ -162,8 +144,8 @@ oysterdep4$size.cat <-
     from = c('20-50', '50-100'),
     to = c('10-100', '10-100')
   )  ## pool <100 micron particles
-
-oysterdep4 <- ddply(oysterdep4, names(oysterdep4)[-c(17)], summarize,
+  
+  ddply(oysterdep4, names(oysterdep4)[-c(17)], summarize,
                    value = sum(value))
 ```
 
@@ -183,29 +165,31 @@ oystersizesums <- ddply(oysterdep4, c('id', 'sampleday', 'size.cat', 'Table',
 
 
 ## Now calculate proportions of each particle size category present in each 
-## sample and take the means for each sampling day
+## sample for each sampling day
 
-oysterprop <- ddply(oystersizesums, 'id', transform, prop = sum/sum(sum))
+oysterprop <- ddply(oystersizesums,
+                    c('sampleday', 'size.cat'), 
+                    summarize, 
+                    sum = sum(sum))
+oysterprop$prop <- numeric(length = nrow(oysterprop))
 
-oysterprop2 <- subset(oysterprop, !(is.na(oysterprop["prop"])))  # remove any NAs
-
-oysterprop2$size.cat <- as.character(oysterprop2$size.cat)
-oysterprop2$size.cat <- as.factor(oysterprop2$size.cat)
-
-oysterprop3 <- ddply(oysterprop2, c("sampleday", "size.cat"), summarize,
-                     mean = mean(prop))
+for(i in 1:nrow(oysterprop)) {
+  oysterprop$prop[i] <-
+    (oysterprop$sum[i] /
+       sum(oysterprop$sum[oysterprop$sampleday == oysterprop$sampleday[i]]))
+}
 
 ## Put the size categories in order
 
-oysterprop3$size.cat <- factor(oysterprop3$size.cat, 
-                                  levels = c("10-100", 
-                                             "100-500", 
-                                             "500-1000", 
-                                             "1000-5000"))
+oysterprop$size.cat <- factor(oysterprop$size.cat,
+                              levels = c("10-100",
+                                         "100-500",
+                                         "500-1000",
+                                         "1000-5000"))
 
 ## Now plot
 
-ggplot(oysterprop3, aes(x=sampleday, y=100*mean, fill = size.cat)) + 
+ggplot(oysterprop, aes(x=sampleday, y=100*prop, fill = size.cat)) + 
   geom_col(size = 1, colour = 'black') + 
   xlab('Sampling Day') + 
   ylab('Average percent') +
@@ -245,21 +229,28 @@ oystertypesums <- ddply(oysterdep4, c('id', 'sampleday', 'Table',
 
 
 ## Now calculate proportions of each particle type/colour present in each 
-## sample and take the means for each sampling day
+## sample for each sampling day
 
-oystertypeprop <- ddply(oystertypesums, 'id', transform, prop = sum/sum(sum))
 
-oystertypeprop2 <- subset(oystertypeprop, !(is.na(oystertypeprop["prop"])))  # remove any NAs
+oystertypeprop <- ddply(oystertypesums,
+                        c('sampleday', 'variable'),
+                        summarize,
+                        sum = sum(sum))
+oystertypeprop$prop <- numeric(length = nrow(oystertypeprop))
 
-oystertypeprop2$variable <- as.character(oystertypeprop2$variable)
-oystertypeprop2$variable <- as.factor(oystertypeprop2$variable)
+for (i in 1:nrow(oystertypeprop)) {
+  oystertypeprop$prop[i] <-
+    (oystertypeprop$sum[i] /
+       sum(oystertypeprop$sum[oystertypeprop$sampleday == 
+                                oystertypeprop$sampleday[i]]))
+}
 
-oystertypeprop3 <- ddply(oystertypeprop2, c("sampleday", "variable"), summarize,
-                     mean = mean(prop))
+oystertypeprop$variable <- as.character(oystertypeprop$variable)
+oystertypeprop$variable <- as.factor(oystertypeprop$variable)
 
 ## Now plot
 
-ggplot(oystertypeprop3, aes(x = sampleday, y = 100 * mean, fill = variable)) +
+ggplot(oystertypeprop, aes(x = sampleday, y = 100 * prop, fill = variable)) +
   geom_col(size = 0.5, colour = 'black') +
   xlab('Sampling Day') +
   ylab('Average percent') +
@@ -270,15 +261,10 @@ ggplot(oystertypeprop3, aes(x = sampleday, y = 100 * mean, fill = variable)) +
       'Grey16',
       'Steel Blue',
       'Navy',
-      'Saddle Brown',
-      'Grey50',
-      'Grey75',
       'Grey90',
       'Forest Green',
-      'Dark Green',
       'Orange',
       'Pink',
-      'Hot Pink',
       'Red',
       'Red3',
       'Turquoise',
@@ -321,7 +307,7 @@ totalsums <- ddply(oysterdep4, c('id', 'sampleday', 'Table', 'Tank',
 ggplot(totalsums, aes(x=sampleday , y=sum)) + 
   geom_boxplot(position=position_dodge(), size=1) + 
   xlab('Day') + 
-  coord_cartesian(ylim = c(0, 41)) +
+  coord_cartesian(ylim = c(0, 15)) +
   ylab('# APs') +
   guides(fill=FALSE) +
   theme_bw() +
@@ -337,7 +323,7 @@ ggplot(totalsums, aes(x=sampleday , y=sum)) +
 ggplot(totalsums, aes(x=sampleday , y=sum/dry.weight)) + 
   geom_boxplot(position=position_dodge(), size=1) + 
   xlab('Day') + 
-  coord_cartesian(ylim = c(0, 20)) +
+  coord_cartesian(ylim = c(0, 3)) +
   ylab('# APs/g dry tissue') +
   guides(fill=FALSE) +
   theme_bw() +
@@ -354,7 +340,7 @@ Let's print out some summary stats.
 ```{r}
 ## Summary stats according to count per individual
 
-with(totalsums, tapply(sum, sampleday, median))  # takes c for each day
+with(totalsums, tapply(sum, sampleday, median))  # takes median for each day
 with(totalsums, tapply(sum, sampleday, min))  # takes minimum for each day
 with(totalsums, tapply(sum, sampleday, max))  # takes maximum for each day
 with(totalsums, tapply(sum, 
@@ -393,7 +379,7 @@ oystersummarytable <- oystersummarytable/sum(oysterdep4$value)*100
 print(oystersummarytable)
 ```
 
-### Blanks
+## Blanks
 Now load in the blanks dataset and set it up for plotting, same as with the oyster data set. First we load in the data.
 
 ```{r}
@@ -458,9 +444,8 @@ So we can remove the red, yellow, green turquoise, purple, gray, brown, orange, 
 
 ```{r}
 depblanks4 <- subset(depblanks3, 
-                     c(variable == 'blu.fib' | 
-                         variable == 'clear.fib' | 
-                         variable == 'pink.fib' |
+                     c(variable == 'clear.fib' | 
+                         variable == 'black.fib' |
                          variable == 'blu.frag')
                      )  # keep only these rows
 
@@ -475,15 +460,9 @@ Let's make the category names a bit more useful for plotting
 ```{r}
 depblanks4$variable <- mapvalues(depblanks4$variable,
                                  from = c(levels(depblanks4$variable)), 
-                                 to = c('Blue fibres',  
+                                 to = c('Black fibres',  
                                         'Blue fragments',
-                                        'Clear fibres', 
-                                        'Pink fibres'))
-
-## And reorder them
-depblanks4$variable <- factor(depblanks4$variable, 
-                              levels = c('Blue fibres', 'Clear fibres',
-                                         'Pink fibres', 'Blue fragments'))
+                                        'Clear fibres'))
 
 summary(depblanks4$variable)
 ```
@@ -516,29 +495,34 @@ blankssizesums <- ddply(depblanks4, c('id', 'size.cat', 'sampleday',
 
 
 
-## Now calculate proportions of each particle size category present in each 
-## sample and take the means for each sampling day
+## Now calculate proportions of each particle size category present for each
+## sampling day
 
-blanksprop <- ddply(blankssizesums, c('id', 'sampleday'), transform, prop = sum/sum(sum))
+blanksprop <- ddply(blankssizesums,
+                    c('sampleday', 'size.cat'), 
+                    summarize, 
+                    sum = sum(sum))
+blanksprop$prop <- numeric(length = nrow(blanksprop))
 
-blanksprop2 <- subset(blanksprop, !(is.na(blanksprop["prop"])))  # remove any NAs
+for(i in 1:nrow(blanksprop)) {
+  blanksprop$prop[i] <-
+    (blanksprop$sum[i] /
+       sum(blanksprop$sum[blanksprop$sampleday == blanksprop$sampleday[i]]))
+}
 
-blanksprop2$size.cat <- as.character(blanksprop2$size.cat)
-blanksprop2$size.cat <- as.factor(blanksprop2$size.cat)
-
-blanksprop3 <- ddply(blanksprop2, c("DOFSample", "sampleday", "size.cat"), summarize,
-                     mean = mean(prop))
+blanksprop$size.cat <- as.character(blanksprop$size.cat)
+blanksprop$size.cat <- as.factor(blanksprop$size.cat)
 
 ## Put the size categories in order
 
-blanksprop3$size.cat <- factor(blanksprop3$size.cat, 
-                                  levels = c("10-100", 
-                                             "100-500", "500-1000", 
-                                             "1000-5000"))
+blanksprop$size.cat <- factor(blanksprop$size.cat,
+                              levels = c("10-100",
+                                         "100-500", "500-1000",
+                                         "1000-5000"))
 
 ## Now plot
 
-ggplot(blanksprop3, aes(x=sampleday, y=100*mean, fill = size.cat)) + 
+ggplot(blanksprop, aes(x=sampleday, y=100*prop, fill = size.cat)) + 
   geom_col(size = 1, colour = 'black') + 
   xlab('Sampling Day') + 
   ylab('Average percent') +
@@ -570,30 +554,33 @@ blankstypesums <- ddply(depblanks4, c('id', 'sampleday', 'DOFSample',
                                       'variable'), 
                         summarize, sum = sum(value))
 
-## Now calculate proportions of each particle type/colour present in each 
-## sample and take the means for each sampling day
+## Now calculate proportions of each particle type/colour present for each 
+## sampling day
 
-blankstypeprop <- ddply(blankstypesums, c('id', 'sampleday'), transform, 
-                        prop = sum/sum(sum))
+blankstypeprop <- ddply(blankstypesums,
+                    c('sampleday', 'variable'), 
+                    summarize, 
+                    sum = sum(sum))
+blankstypeprop$prop <- numeric(length = nrow(blankstypeprop))
 
-blankstypeprop2 <- subset(blankstypeprop, !(is.na(blankstypeprop["prop"])))  # remove any NAs
+for(i in 1:nrow(blankstypeprop)) {
+  blankstypeprop$prop[i] <-
+    (blankstypeprop$sum[i] /
+       sum(blankstypeprop$sum[blankstypeprop$sampleday == blankstypeprop$sampleday[i]]))
+}
 
-blankstypeprop2$variable <- as.character(blankstypeprop2$variable)
-blankstypeprop2$variable <- as.factor(blankstypeprop2$variable)
-
-blankstypeprop3 <- ddply(blankstypeprop2, c("DOFSample", "sampleday", 
-                                            "variable"), summarize,
-                     mean = mean(prop))
+blankstypeprop$variable <- as.character(blankstypeprop$variable)
+blankstypeprop$variable <- as.factor(blankstypeprop$variable)
 
 ## Now plot
 
-ggplot(blankstypeprop3, aes(x=sampleday, y=100*mean, fill = variable)) + 
+ggplot(blankstypeprop, aes(x=sampleday, y=100*prop, fill = variable)) + 
   geom_col(size = 0.5, colour = 'black') + 
   xlab('Sampling Day') + 
   ylab('Average percent') +
   guides(fill=guide_legend(title="Particle size category \n (microns)")) +
   theme_bw() +
-  scale_fill_manual(values = c('Steel Blue', 'Navy', 'Grey50', 'Pink')) +
+  scale_fill_manual(values = c('Black', 'Steel Blue', 'Grey50')) +
   theme(legend.text = element_text(size=12), text = element_text(size=12), 
         panel.spacing = unit(1, "lines"),  
         axis.text.x = element_text(size = 12),
@@ -663,6 +650,8 @@ blanksummarytable <- blanksummarytable/sum(depblanks4$value)*100
 print(blanksummarytable)
 ```
 
+## Ajusted oyster data
+
 Now subtract the blank counts from the appropriate size and shape categories for the oyster counts.
 
 ```{r}
@@ -706,30 +695,33 @@ oystersizesums2 <- ddply(oysterdep5, c('id', 'sampleday', 'size.cat', 'Table',
 
 
 
-## Now calculate proportions of each particle size category present in each 
-## sample and take the means for each sampling day
+## Now calculate proportions of each particle size category present for each 
+## sampling day
 
-oysterprop4 <- ddply(oystersizesums2, 'id', transform, prop = sum/sum(sum))
+oysterprop2 <- ddply(oystersizesums2,
+                    c('sampleday', 'size.cat'), 
+                    summarize, 
+                    sum = sum(sum))
+oysterprop2$prop <- numeric(length = nrow(oysterprop2))
 
-oysterprop5 <- subset(oysterprop4, !(is.na(oysterprop4["prop"])))  # remove any NAs
+for(i in 1:nrow(oysterprop2)) {
+  oysterprop2$prop[i] <-
+    (oysterprop2$sum[i] /
+       sum(oysterprop2$sum[oysterprop2$sampleday == oysterprop2$sampleday[i]]))
+}
 
-oysterprop5$size.cat <- as.character(oysterprop5$size.cat)
-oysterprop5$size.cat <- as.factor(oysterprop5$size.cat)
-
-oysterprop6 <- ddply(oysterprop5, c("sampleday", "size.cat"), summarize,
-                     mean = mean(prop))
-
+oysterprop2$size.cat <- as.character(oysterprop2$size.cat)
+oysterprop2$size.cat <- as.factor(oysterprop2$size.cat)
 
 ## Now plot
 
-ggplot(oysterprop6, aes(x=sampleday, y=100*mean, fill = size.cat)) + 
-  geom_col(size = 1) + 
+ggplot(oysterprop2, aes(x=sampleday, y=100*prop, fill = size.cat)) + 
+  geom_col(size = 1, colour = 'black') + 
   xlab('Sampling Day') + 
   ylab('Average percent') +
   guides(fill=guide_legend(title="Particle size category \n (microns)")) +
   theme_bw() +
-  scale_fill_manual(values = c("#F0E442", "#009E73", 
-                               "#56B4E9", "#0072B2", "black")) +
+  scale_fill_manual(values = c('grey0', 'grey25', 'grey50', 'grey75')) +
   theme(legend.text = element_text(size=12), text = element_text(size=12), 
         panel.spacing = unit(1, "lines"),  
         axis.text.x = element_text(size = 12),
@@ -759,41 +751,68 @@ oystertypesums2 <- ddply(oysterdep5, c('id', 'sampleday', 'Table',
 
 
 
-## Now calculate proportions of each particle type/colour present in each 
-## sample and take the means for each sampling day
+## Now calculate proportions of each particle type/colour present for each
+## sampling day
 
-oystertypeprop4 <- ddply(oystertypesums2, 'id', transform, prop = sum/sum(sum))
+oystertypeprop2 <- ddply(oystertypesums2,
+                    c('sampleday', 'variable'), 
+                    summarize, 
+                    sum = sum(sum))
+oystertypeprop2$prop <- numeric(length = nrow(oystertypeprop2))
 
-oystertypeprop5 <- subset(oystertypeprop4, !(is.na(oystertypeprop4["prop"])))  # remove any NAs
+for(i in 1:nrow(oystertypeprop2)) {
+  oystertypeprop2$prop[i] <-
+    (oystertypeprop2$sum[i] /
+       sum(oystertypeprop2$sum[oystertypeprop2$sampleday == oystertypeprop2$sampleday[i]]))
+}
 
-oystertypeprop5$variable <- as.character(oystertypeprop5$variable)
-oystertypeprop5$variable <- as.factor(oystertypeprop5$variable)
-
-oystertypeprop6 <- ddply(oystertypeprop5, c("sampleday", "variable"), summarize,
-                     mean = mean(prop))
+oystertypeprop2$variable <- as.character(oystertypeprop2$variable)
+oystertypeprop2$variable <- as.factor(oystertypeprop2$variable)
 
 ## Now plot
 
-ggplot(oystertypeprop6, aes(x=sampleday, y=100*mean, fill = variable)) + 
-  geom_col(size = 0.5, colour = 'black') + 
-  xlab('Sampling Day') + 
+
+ggplot(oystertypeprop2, aes(x = sampleday, y = 100 * prop, fill = variable)) +
+  geom_col(size = 0.5, colour = 'black') +
+  xlab('Sampling Day') +
   ylab('Average percent') +
-  guides(fill=guide_legend(title="Particle size category \n (microns)")) +
+  guides(fill = guide_legend(title = "Particle size category \n (microns)")) +
   theme_bw() +
-  scale_fill_manual(values = c('black', 'blue', 'saddlebrown', 'grey90', 
-                               'green4', 'orange',  'pink', 'red', 'turquoise', 
-                               'yellow')) +
-  theme(legend.text = element_text(size=12), text = element_text(size=12), 
-        panel.spacing = unit(1, "lines"),  
-        axis.text.x = element_text(size = 12),
-        axis.text.y = element_text(size = 12, 
-                                   margin = margin(t=0, r=0, b=0, l=2)),
-        strip.background = element_blank(), 
-        panel.grid.major = element_blank(), 
-        panel.grid.minor = element_blank(),
-        strip.placement = "outside") +
-  scale_x_discrete(expand = expand_scale(0,0.5)) + 
-  scale_y_continuous(expand = expand_scale(0.03,0))
+  scale_fill_manual(
+    values = c(
+      'Grey16',
+      'Steel Blue',
+      'Navy',
+      'Grey90',
+      'Forest Green',
+      'Orange',
+      'Pink',
+      'Red',
+      'Red3',
+      'Turquoise',
+      'White',
+      'Gold'
+    )
+  ) +
+  theme(
+    legend.text = element_text(size = 12),
+    text = element_text(size = 12),
+    panel.spacing = unit(1, "lines"),
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12,
+                               margin = margin(
+                                 t = 0,
+                                 r = 0,
+                                 b = 0,
+                                 l = 2
+                               )),
+    strip.background = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    strip.placement = "outside"
+  ) +
+  scale_x_discrete(expand = expand_scale(0, 0.5)) +
+  scale_y_continuous(expand = expand_scale(0.03, 0))
 
 ```
 
@@ -810,7 +829,7 @@ totalsums2 <- ddply(oysterdep5, c('id', 'sampleday', 'Table', 'Tank',
 ggplot(totalsums2, aes(x=sampleday , y=sum)) + 
   geom_boxplot(position=position_dodge(), size=1) + 
   xlab('Day') + 
-  coord_cartesian(ylim = c(0, 40)) +
+  coord_cartesian(ylim = c(0, 13)) +
   ylab('# AFs') +
   guides(fill=FALSE) +
   theme_bw() +
@@ -826,7 +845,7 @@ ggplot(totalsums2, aes(x=sampleday , y=sum)) +
 ggplot(totalsums2, aes(x=sampleday , y=sum/dry.weight)) + 
   geom_boxplot(position=position_dodge(), size=1) + 
   xlab('Day') + 
-  coord_cartesian(ylim = c(0, 15)) +
+  coord_cartesian(ylim = c(0, 3)) +
   ylab('# AFs/g dry tissue') +
   guides(fill=FALSE) +
   theme_bw() +
@@ -843,7 +862,7 @@ Let's print out some summary stats.
 ```{r}
 ## Summary stats according to count per individual
 
-with(totalsums2, tapply(sum, sampleday, mean))  # takes mean for each day
+with(totalsums2, tapply(sum, sampleday, median))  # takes median for each day
 with(totalsums2, tapply(sum, sampleday, min))  # takes minimum for each day
 with(totalsums2, tapply(sum, sampleday, max))  # takes maximum for each day
 with(totalsums2, tapply(sum, 
@@ -852,7 +871,7 @@ with(totalsums2, tapply(sum,
 ## Summary stats according to concentration
 
 with(totalsums2, tapply(sum/dry.weight, 
-                       sampleday, mean))  # takes mean for each day
+                       sampleday, median))  # takes median for each day
 with(totalsums2, tapply(sum/dry.weight, 
                        sampleday, min))  # takes minimum for each day
 with(totalsums2, tapply(sum/dry.weight, 
@@ -1271,136 +1290,48 @@ watersummarytable <- watersummarytable/sum(depwater4$value)*100
 print(watersummarytable)
 ```
 
-## MODELLING
+## Statistics
 Now fit a generalized linear mixed model (GLMM) to the oyster data using the package glmmTMB to determine differences over time. We'll specify AF count as the response variable, sampling day as the predictor, and tank nested within table as the random, or mixed, effects. You'll notice that sample day is specified twice. The second time is to set it up as the intercept for the random effect, which will allow the linear relationship between AP sum and sampling day to vary in both slope and intercept according separately within each tank, within each table. This accounts for any the variation that may have been caused by any variables that we did not account for and may have varied somehow in different tanks and or/tables.
 
 ```{r}
-M1 <- glmmTMB(sum ~ sampleday + dry.weight + (1 | Table/Tank), 
-              family = genpois(link = 'log'), 
+totalsums2$trans <- with(totalsums2, log((sum + 1)/dry.weight ))
+
+M1 <- lmer(trans ~ sampleday - 1 + (1 | Table/Tank), 
               data = totalsums2) ## Fits a GLMM
 
 summary(M1) # model output
-plot(resid(M1) ~ fitted(M1)) # plot residuals vs. fitted
+plot(resid(M1, type = 'pearson') ~ fitted(M1)) # plot residuals vs. fitted
 abline(0,0)
-plot(resid(M1) ~ totalsums$sampleday) # plot residuals vs. predictor
+plot(resid(M1) ~ totalsums2$sampleday) # plot residuals vs. predictor
+
+coefs <- data.frame(summary(M1)$coefficients)
+coefs$parameter <- rownames(coefs)
+
+ggplot(coefs) +
+  geom_errorbar(aes(x = parameter,
+                    ymin = Estimate - Std..Error,
+                    ymax = Estimate + Std..Error)) +
+  geom_point(aes(x = parameter,
+                 y = Estimate)) +
+  coord_flip() +
+  theme_classic()
+  
 ```
 
-Looking at the plot of residuals vs. fitted and residuals vs. sample day, we can see that the variance of the residuals varies according to the AP count and the sampling day. This violates the assumption of homogeneity of variance.
-
-Let's try fitting the same model structure, but assuming that the response variable (AF count) varies at each value of x (sampling day) according to a negative binomial distribution.
-
-```{r}
-M2 <- glmmTMB(sum ~ sampleday + dry.weight + (1 | Table/Tank), 
-              family = nbinom2(link = 'log'),
-               data = totalsums2) ## Fits a NB GLMM
-
-summary(M2) # model output
-plot(resid(M2) ~ fitted(M2)) # plot residuals vs. fitted
-plot(resid(M2) ~ totalsums$sampleday) # plot residuals vs. predictor
-
-## Can compare M1 and M2 using AICc
-
-AICc(M1, M2) 
-# the negative binomial model with quadratically increasing variance is a better fit
-```
-
-The negative binomial model, which assumes that the variance of AF concentration increases quadratically with day of sampling, is a better fit.
-
-Now let's try pulling out the predictor (sampling day) and using the anova() function to compare the first model with the null models to determine whether sampling day significantly predicts AP concentration.
-
-```{r}
-M3 <- glmmTMB(sum ~ dry.weight + (1 | Table/Tank), family = nbinom2(link = 'log'), 
-               data = totalsums2) ## Same structure except no effect of day
-
-M4 <- glmmTMB(sum ~ sampleday + (1 | Table/Tank), family = nbinom2(link = 'log'), 
-               data = totalsums2) ## Same structure except no effect of dry.weight
-
-anova(M2, M3)  # day is significant, p < 0.001
-anova(M2, M4)  # dry weight is not significant, p = 0.54
-AICc(M2, M4)  # better fit without dry weight, so go with M4
-
-M5 <- glmmTMB(sum ~ (1 | Table/Tank), family = nbinom2(link = 'log'), 
-               data = totalsums2) ## Null model
-anova(M4, M5)  # sample day significant, p < 0.001
-```
-
-Sampling day is significant with a p-value of <0.001. We can now go into the model to determine which days are significantly different from each other. Looking back at the summary of M1 we can see that the AP concentrations at days 5 and 10 are both significantly different from day 0 (the reference level).
-
-Now we reorder the levels in sample day to vary the reference level and figure out which days are significantly different from which other days.
-
-```{r}
-totalsums2$sampleday <- relevel(totalsums2$sampleday, '1')
-M5 <- glmmTMB(sum ~ sampleday + (1 | Table/Tank), family = nbinom2(), 
-               data = totalsums2) ## Fits a NB GLMM
-
-summary(M2) # model output
-```
-
-Similarly, days 5 and 10 are significantly different from day 1.
-
-```{r}
-totalsums2$sampleday <- relevel(totalsums2$sampleday, '3')
-M5 <- glmmTMB(sum ~ sampleday + (1 | Table/Tank), family = nbinom2(), 
-               data = totalsums2) ## Fits a NB GLMM
-
-summary(M5) # model output
-```
-
-Days 5 and 10 are significantly different from day 3.
-
-```{r}
-totalsums2$sampleday <- relevel(totalsums2$sampleday, '5')
-M5 <- glmmTMB(sum ~ sampleday + (1 | Table/Tank), family = nbinom2(), 
-               data = totalsums2) ## Fits a NB GLMM
-
-summary(M5) # model output
-```
-
-Day 10 is the only day not significantly different from day 5.
-
-So in summary:
-
-Day | 0 | 1 | 3 | 5 | 10
-----|---|---|---|---|-----
-0   | x | - | - |sig| sig 
-----|---|---|---|---|-----
-1   | x | x | - |sig| sig
-----|---|---|---|---|-----
-3   | x | x | x |sig| sig
-----|---|---|---|---|-----
-5   | x | x | x | x | -
-----|---|---|---|---|-----
-10  | x | x | x | x | x
-
-Now let's replot the data with letters used to indicate which days are significantly different from one another. Those with different letters are statistically different.
+## Plot model predictions
 
 ```{r}
 
-## First we have to get the days back in the right order
-
-totalsums2$sampleday <- factor(totalsums2$sampleday, 
-                              levels = c("0","1","3","5", "10"))
-
-## Now plot
-
-ggplot(totalsums2, aes(x=sampleday , y=sum)) + 
-  geom_boxplot(position=position_dodge(), size=1) + 
-  xlab('Day') + 
-  coord_cartesian(ylim = c(0, 35)) +
-  ylab('# AFs') +
-  guides(fill=FALSE) +
-  theme_bw() +
-  theme(text = element_text(size=12), 
-        axis.text.x = element_text(size = 12),
-        axis.text.y = element_text(size = 12),
-        panel.grid.major = element_blank(), 
-        panel.grid.minor = element_blank()) +
-  annotate("text", x=1, y=27, label = "A") + 
-  annotate("text", x=2, y=30, label = "A") +
-  annotate("text", x=3, y=25, label = "A") +
-  annotate("text", x=4, y=7, label = "B") +
-  annotate("text", x=5, y=12, label = "B")
 ```
+
+
+
+
+
+
+
+
+
 
 Run tests to determine whether there were significant differences in AP size according to day.
 
