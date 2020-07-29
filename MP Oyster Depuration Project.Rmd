@@ -15,6 +15,17 @@ library(glmmTMB)
 library(MuMIn)
 library(lme4)
 library(dotwhisker)
+
+theme1 <-
+  theme_bw() +
+  theme(
+    text = element_text(size = 7),
+    axis.text = element_text(size = 7),
+    strip.background = element_blank(),
+    strip.text = element_text(size = 7),
+    legend.text = element_text(size = 7),
+    panel.grid = element_blank()
+  )
 ```
 
 ## Oyster data
@@ -1294,34 +1305,58 @@ print(watersummarytable)
 Now fit a generalized linear mixed model (GLMM) to the oyster data using the package glmmTMB to determine differences over time. We'll specify AF count as the response variable, sampling day as the predictor, and tank nested within table as the random, or mixed, effects. You'll notice that sample day is specified twice. The second time is to set it up as the intercept for the random effect, which will allow the linear relationship between AP sum and sampling day to vary in both slope and intercept according separately within each tank, within each table. This accounts for any the variation that may have been caused by any variables that we did not account for and may have varied somehow in different tanks and or/tables.
 
 ```{r}
-totalsums2$trans <- with(totalsums2, log((sum + 1)/dry.weight ))
-
-M1 <- lmer(trans ~ sampleday - 1 + (1 | Table/Tank), 
-              data = totalsums2) ## Fits a GLMM
+# Poison model
+M1 <- 
+  glmmTMB(sum ~ sampleday*dry.weight - 1 + (1 | Table/Tank),
+          family = poisson(link = 'log'),
+          data = totalsums2) ## Fits a GLMM
 
 summary(M1) # model output
 plot(resid(M1, type = 'pearson') ~ fitted(M1)) # plot residuals vs. fitted
 abline(0,0)
-plot(resid(M1) ~ totalsums2$sampleday) # plot residuals vs. predictor
+plot(resid(M1, type = 'pearson') ~ totalsums2$sampleday) # plot residuals vs. predictor
 
-coefs <- data.frame(summary(M1)$coefficients)
+# Negative binomial model
+M2 <- 
+  glmmTMB(sum ~ sampleday*dry.weight - 1 + (1 | Table/Tank),
+          family = nbinom1(link = 'log'),
+          data = totalsums2)
+
+AICc(M1, M2)  # The Poisson model is the best fit
+
+coefs <- data.frame(summary(M1)$coefficients$cond)
 coefs$parameter <- rownames(coefs)
-
-ggplot(coefs) +
-  geom_errorbar(aes(x = parameter,
-                    ymin = Estimate - Std..Error,
-                    ymax = Estimate + Std..Error)) +
-  geom_point(aes(x = parameter,
-                 y = Estimate)) +
-  coord_flip() +
-  theme_classic()
-  
 ```
 
 ## Plot model predictions
 
 ```{r}
+predictions <- data.frame(predict(M1, 
+                                  type = 'link', 
+                                  se.fit = TRUE,
+                                  re.form = NA))
 
+totalsums3 <- cbind(totalsums2, predictions)
+
+totalsums3$mean <- exp(totalsums3$fit)
+totalsums3$upper <- exp(with(totalsums3, fit + se.fit))
+totalsums3$lower <- exp(with(totalsums3, fit - se.fit))
+
+ggplot(totalsums3) +
+  geom_ribbon(aes(x = dry.weight,
+                  ymin = lower,
+                  ymax = upper),
+              fill = 'steel blue',
+              alpha = 0.5) +
+  geom_line(aes(x = dry.weight,
+                y = mean),
+            size = 1) +
+  geom_point(aes(x = dry.weight,
+                 y = sum)) +
+  facet_grid(. ~ sampleday) +
+  labs(x = 'Dry tissue weight (g)',
+       y = 'Number of anthropogenic particle') +
+  theme1
 ```
 
 

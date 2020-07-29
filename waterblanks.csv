@@ -1,0 +1,16 @@
+id,day,size.cat,Table,Tank,DOFSample,time.in.oven,time.out.oven,dat.filter,dat.count,observer,red.fib,yell.fib,green.fib,turq.fib,blu.fib,purp.fib,gray.fib,clear.fib,pink.fib,brown.fib,orang.fib,black.fib,tot.fib,red.frag,yell.frag,green.frag,turq.frag,blu.frag,purp.frag,gray.frag,clear.frag,pink.frag,brown.frag,orang.frag,black.frag,whit.spher,clear.spher,tot.frag.spher,tot.part
+Water Control Control 1,Control,twentyto50,Control,n/a,12-13-2017,2017-01-09/17:00,2017-01-17/09:30,12-13-2017,12-20-2017,MD,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Water Control Control 1,Control,fiftyto100,Control,n/a,12-13-2017,2017-01-09/17:00,2017-01-17/09:30,12-13-2017,12-20-2017,MD,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Water Control Control 1,Control,onehundredto500,Control,n/a,12-13-2017,2017-01-09/17:00,2017-01-17/09:30,12-13-2017,12-20-2017,MD,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Water Control Control 1,Control,fivehundredto1000,Control,n/a,12-13-2017,2017-01-09/17:00,2017-01-17/09:30,12-13-2017,12-20-2017,MD,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Water Control Control 1,Control,onethousandto5000,Control,n/a,12-13-2017,2017-01-09/17:00,2017-01-17/09:30,12-13-2017,12-20-2017,MD,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Water Control Control 2,Control,twentyto50,Control,n/a,12-13-2017,2017-01-09/17:00,2017-01-17/09:30,12-13-2017,12-20-2017,MD,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Water Control Control 2,Control,fiftyto100,Control,n/a,12-13-2017,2017-01-09/17:00,2017-01-17/09:30,12-13-2017,12-20-2017,MD,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Water Control Control 2,Control,onehundredto500,Control,n/a,12-13-2017,2017-01-09/17:00,2017-01-17/09:30,12-13-2017,12-20-2017,MD,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Water Control Control 2,Control,fivehundredto1000,Control,n/a,12-13-2017,2017-01-09/17:00,2017-01-17/09:30,12-13-2017,12-20-2017,MD,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Water Control Control 2,Control,onethousandto5000,Control,n/a,12-13-2017,2017-01-09/17:00,2017-01-17/09:30,12-13-2017,12-20-2017,MD,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Water Control Control 3,Control,twentyto50,Control,n/a,12-13-2017,2017-01-09/17:00,2017-01-17/09:30,12-13-2017,12-20-2017,MD,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Water Control Control 3,Control,fiftyto100,Control,n/a,12-13-2017,2017-01-09/17:00,2017-01-17/09:30,12-13-2017,12-20-2017,MD,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Water Control Control 3,Control,onehundredto500,Control,n/a,12-13-2017,2017-01-09/17:00,2017-01-17/09:30,12-13-2017,12-20-2017,MD,0,0,0,0,2,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Water Control Control 3,Control,fivehundredto1000,Control,n/a,12-13-2017,2017-01-09/17:00,2017-01-17/09:30,12-13-2017,12-20-2017,MD,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+Water Control Control 3,Control,onethousandto5000,Control,n/a,12-13-2017,2017-01-09/17:00,2017-01-17/09:30,12-13-2017,12-20-2017,MD,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
