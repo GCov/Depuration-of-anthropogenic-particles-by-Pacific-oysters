@@ -4,55 +4,40 @@ library(cowplot)
 ## Figure 2
 
 Plot1 <- 
-  ggplot(totalblanksums, aes(y=sum)) + 
-  geom_boxplot(position=position_dodge(), size=0.5, fill = 'grey90') + 
-  ylab(expression(paste('# AFs'~sample^-1))) +
+  ggplot(totalblanksums) + 
+  geom_jitter(aes(x = 1, 
+                  y = sum),
+              size=0.5) + 
+  ylab(expression(paste('# APs'~sample^-1))) +
+  xlab("") +
   guides(fill=FALSE) +
   theme_bw() +
-  coord_cartesian(ylim = c(0,7)) +
-  theme(
-    text = element_text(size = 7),
-    axis.text.x = element_blank(),
-    axis.text.y = element_text(size = 7),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    axis.line.x = element_blank(),
-    axis.ticks.x = element_blank()
-  )
+  coord_cartesian(ylim = c(0,3)) +
+  theme1 +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
 
-Plot2 <- 
-  ggplot(blanksprop3, aes(x=sampleday, y=100*mean, fill = size.cat)) + 
-  geom_col(size = 0.25, colour = 'black') + 
-  xlab('') + 
-  ylab('Average percent') +
-  guides(fill=guide_legend(title="Particle size \ncategory (μm)")) +
+Plot2 <-
+  ggplot(blanksprop, aes(x = sampleday, y = 100 * prop, fill = size.cat)) +
+  geom_col(size = 0.25, colour = 'black') +
+  xlab('Sampling day') +
+  ylab('Percent') +
+  guides(fill = guide_legend(title = expression(paste(
+    "Particle size category (" * mu * "m)"
+  )))) +
   theme_bw() +
-  scale_fill_manual(values = c("#009E73", "#56B4E9", "#0072B2", "black")) +
-  theme(legend.text = element_text(size=7), 
-        text = element_text(size=7), 
-        legend.key.size = unit(0.4, 'cm'),
-        axis.text.x = element_text(size = 7),
-        axis.text.y = element_text(size = 7),
-        panel.grid.major = element_blank(), 
-        panel.grid.minor = element_blank()+
-  scale_x_discrete(expand = expand_scale(0, 0.5))
-  )
+  scale_fill_manual(values = c('grey25', 'grey50', 'grey75')) +
+  theme1
 
 Plot3 <- 
-  ggplot(blankstypeprop3, aes(x=sampleday, y=100*mean, fill = variable)) + 
+  ggplot(blankstypeprop, aes(x=sampleday, y=100*prop, fill = variable)) + 
   geom_col(size = 0.25, colour = 'black') + 
-  xlab('Sampling Day') + 
-  ylab('Average percent') +
-  guides(fill=guide_legend(title="Particle size \ncategory (μm)")) +
+  xlab('Sampling day') + 
+  ylab('Percent') +
+  guides(fill=guide_legend(title="Particle type")) +
   theme_bw() +
-  scale_fill_manual(values = c('blue', 'grey90', 'pink')) +
-  theme(legend.text = element_text(size=7), text = element_text(size=7),
-        legend.key.size = unit(0.4, 'cm'),
-        axis.text.x = element_text(size = 7),
-        axis.text.y = element_text(size = 7),
-        panel.grid.major = element_blank(), 
-        panel.grid.minor = element_blank()) +
-  scale_x_discrete(expand = expand_scale(0,0.5))
+  scale_fill_manual(values = c('Grey16', 'Grey90')) +
+  theme1
 
 Plot4 <- plot_grid(Plot2, Plot3, align = 'v', nrow = 2, ncol = 1, 
                    rel_widths = c(1,1), 
@@ -73,7 +58,7 @@ plot_grid(Plot1, Plot4, nrow = 1, ncol = 2, rel_widths = c(1, 3),
 dev.off()
 
 
-## Figure 2
+## Figure 3
 
 A <- 
   ggplot(totalwatersums, aes(x=day, y=sum)) + 
@@ -147,72 +132,52 @@ plot_grid(A, D, nrow = 1, ncol = 2, rel_widths = c(1, 2),
 
 dev.off()
 
-### Figure 3
+### Figure 4
 
 A.1 <- 
-  ggplot(totalsums2, aes(x=sampleday, y=sum)) + 
-    geom_boxplot(position=position_dodge(), size=0.5, fill = 'grey90',
-                 outlier.size = 0.5) + 
-    xlab('Day') + 
-    coord_cartesian(ylim = c(0, 35)) +
-    ylab(expression(paste('# AFs '~ind^-1))) +
-    guides(fill=FALSE) +
-    theme_bw() +
-    theme(text = element_text(size=7), 
-          axis.text.x = element_text(size = 7),
-          axis.text.y = element_text(size = 7),
-          strip.background = element_blank(),
-          panel.grid.major = element_blank(), 
-          panel.grid.minor = element_blank()) +
-    annotate("text", x=1, y=27, label = "*", size = 4) + 
-    annotate("text", x=2, y=30, label = "*", size = 4) +
-    annotate("text", x=3, y=25, label = "*", size = 4) +
-    annotate("text", x=4, y=7, label = "**", size = 4) +
-    annotate("text", x=5, y=12, label = "**", size = 4)
+  ggplot(totalsums3) +
+  geom_ribbon(aes(x = dry.weight,
+                  ymin = lower,
+                  ymax = upper),
+              fill = 'steel blue',
+              alpha = 0.5) +
+  geom_line(aes(x = dry.weight,
+                y = mean),
+            size = 0.5) +
+  geom_point(aes(x = dry.weight,
+                 y = sum),
+             size = 0.5) +
+  facet_grid(. ~ sampleday,
+             labeller = as_labeller(c('0' = 'Day 0',
+                                      '1' = 'Day 1',
+                                      '3' = 'Day 3',
+                                      '5' = 'Day 5',
+                                      '10' = 'Day 10'))) +
+  labs(x = 'Dry tissue weight (g)',
+       y = 'Number of APs') +
+  theme1
 
 B.1 <- 
-  ggplot(oysterprop6, aes(x=sampleday, y=100*mean, fill = size.cat)) + 
-    geom_col(size = 0.25, colour = 'black') + 
-    xlab('Sampling Day') + 
-    ylab('Average percent') +
-    guides(fill=guide_legend(title="Particle size \ncategory (μm)")) +
-    theme_bw() +
-    scale_fill_manual(values = c("#F0E442", "#009E73", 
-                               "#56B4E9", "#0072B2", "black")) +
-    theme(legend.text = element_text(size=7), text = element_text(size=7), 
-          legend.key.size = unit(0.4, 'cm'),
-          legend.position = 'bottom',
-          panel.spacing = unit(1, "lines"),  
-          axis.text.x = element_text(size = 7),
-          axis.text.y = element_text(size = 7, 
-                                     margin = margin(t=0, r=0, b=0, l=2)),
-          strip.background = element_blank(), 
-          panel.grid.major = element_blank(), 
-          panel.grid.minor = element_blank(),
-          strip.placement = "outside") +
-    scale_x_discrete(expand = expand_scale(0,0.5)) + 
-    scale_y_continuous(expand = expand_scale(0,0))
+  ggplot(oysterprop2, aes(x=sampleday, y=100*prop, fill = size.cat)) + 
+  geom_col(size = 0.5, colour = 'black') + 
+  xlab('Sampling Day') + 
+  ylab('Percent') +
+  guides(fill=guide_legend(title="Particle size category \n (microns)")) +
+  theme_bw() +
+  scale_fill_manual(values = c('grey25', 'grey50', 'grey75')) +
+  theme1
 
 C.1 <- 
-  ggplot(oystertypeprop6, aes(x=sampleday, y=100*mean, fill = variable)) + 
-    geom_col(size = 0.25, colour = 'black') + 
-    xlab('Sampling Day') + 
-    ylab('Average percent') +
-    guides(fill=guide_legend(title="Particle colour and shape")) +
-    theme_bw() +
-    scale_fill_manual(values = c('black', 'blue', 'saddlebrown', 'grey90', 
-                                 'green4', 'orange',  'pink', 'red', 'turquoise', 
-                                 'yellow')) +
-    theme(legend.text = element_text(size=7), text = element_text(size=7),
-          legend.key.size = unit(0.4, 'cm'),
-          panel.spacing = unit(1, "lines"),  
-          axis.text.x = element_text(size = 7),
-          axis.text.y = element_text(size = 7),
-          strip.background = element_blank(), 
-          panel.grid.major = element_blank(), 
-          panel.grid.minor = element_blank()) +
-    scale_x_discrete(expand = expand_scale(0,0.5)) + 
-    scale_y_continuous(expand = expand_scale(0,0))
+  ggplot(oystertypeprop2, aes(x = sampleday, y = 100 * prop, fill = variable)) +
+  geom_col(size = 0.5, colour = 'black') +
+  xlab('Sampling Day') +
+  ylab('Percent') +
+  guides(fill = guide_legend(title = "Particle type")) +
+  theme_bw() +
+  scale_fill_manual(values = c('Grey16', 'Steel Blue', 'Grey90', 'Orange', 
+                               'Pink', 'Red', 'Turquoise', 'White', 
+                               'Yellow')) +
+  theme1
 
 D.1 <- plot_grid(A.1, B.1, align = 'v', nrow = 2, ncol = 1, rel_widths = 1, 
                rel_heights = 1, labels = c('A','B'), label_size = 8)
@@ -220,10 +185,10 @@ D.1 <- plot_grid(A.1, B.1, align = 'v', nrow = 2, ncol = 1, rel_widths = 1,
 png(
   filename = "Figure 4.png",
   width = 19,
-  height = 14,
+  height = 6,
   units = "cm",
   pointsize = 7,
-  res = 600
+  res = 500
 )
 
 plot_grid(D.1, C.1, nrow = 1, ncol = 2, rel_widths = c(1, 1),

@@ -92,32 +92,29 @@ oysterdep3 <- oysterdep3[c('id', 'sampleday', 'size.cat', 'Table', 'Tank',
 head(oysterdep3)  # now 'variable' is particle category and 'value is the count'
 ```
 
-Now we want to see what kind of particles we found and remove any categories that we didn't end up using.
+Now we want to see what kind of particles we found and remove any categories that we didn't end up using. First get rid of the <100 micron particles as we're not confident in these.
 
 ```{r}
+oysterdep3 <- subset(oysterdep3, size.cat != '20-50' & size.cat != '50-100')
+
 cat.sums <- aggregate(oysterdep3$value ~ 
                         oysterdep3$variable, FUN = sum)  # sums everything
 print(cat.sums)
 ```
 
-So we can remove the purple fibre, gray fibre, yellow fragment, purple fragment, gray fragment, brown fragment, orange fragment, and black fragment categories because we didn't count any of these.
+So we can remove the empty categories.
 
 ```{r}
 oysterdep4 <- subset(oysterdep3, 
-                     variable != 'green.fib' &
-                       variable != 'purp.fib' &
-                       variable != 'gray.fib' &
-                       variable != 'brown.fib' &
-                       variable != 'yell.frag' &
-                       variable != 'turq.frag' &
-                       variable != 'purp.frag' &
-                       variable != 'gray.frag' &
-                       variable != 'clear.frag' &
-                       variable != 'pink.frag' &
-                       variable != 'brown.frag' &
-                       variable != 'orang.frag' &
-                       variable != 'black.frag' &
-                       variable != 'clear.spher')  # removes all these rows
+                     variable == 'red.fib' |
+                       variable == 'yell.fib' |
+                       variable == 'turq.fib' |
+                       variable == 'blu.fib' |
+                       variable == 'clear.fib' |
+                       variable == 'pink.fib' |
+                       variable == 'orang.fib' |
+                       variable == 'black.fib' |
+                       variable == 'whit.spher')  # removes all these rows
 
 oysterdep4$variable <- as.character(oysterdep4$variable)
 oysterdep4$variable <- as.factor(oysterdep4$variable)  # gets rid of those names
@@ -131,14 +128,11 @@ Let's make the category names a bit more useful for plotting
 oysterdep4$variable <- mapvalues(oysterdep4$variable,
                                  from = c(levels(oysterdep4$variable)), 
                                  to = c('Black fibres', 
-                                        'Blue fibres', 
-                                        'Blue fragments',
+                                        'Blue fibres',
                                         'Clear fibres',
-                                        'Green fragments',
                                         'Orange fibres',
                                         'Pink fibres',
                                         'Red fibres',
-                                        'Red fragments',
                                         'Turquoise fibres', 
                                         'White spheres',
                                         'Yellow fibres'))
@@ -146,18 +140,15 @@ oysterdep4$variable <- mapvalues(oysterdep4$variable,
 summary(oysterdep4$variable)
 ```
 
-Let's combine all size categories below 100 microns, since we weren't very confident in identifying these size classes so it makes more sense to pool them.
+Let's remove size categories below 100 microns, since we weren't very confident in identifying them.
 
 ```{r}
-oysterdep4$size.cat <-
-  mapvalues(
-    oysterdep4$size.cat,
-    from = c('20-50', '50-100'),
-    to = c('10-100', '10-100')
-  )  ## pool <100 micron particles
+oysterdep4 <- subset(oysterdep4, 
+                     size.cat != '20-50' &
+                       size.cat != '50-100')
   
-  ddply(oysterdep4, names(oysterdep4)[-c(17)], summarize,
-                   value = sum(value))
+oysterdep4$size.cat <- as.character(oysterdep4$size.cat)
+oysterdep4$size.cat <- as.factor(oysterdep4$size.cat)
 ```
 
 Next let's make plots of the distribution of sizes and particle types and colours.
@@ -167,13 +158,29 @@ Starting with size
 ```{r}
 ## First we need to make a new data frame of sums according to each size category
 
-oystersizesums <- ddply(oysterdep4, c('id', 'sampleday', 'size.cat', 'Table', 
-                                      'Tank', 'DOFSample', 'length', 'width',
-                                      'depth', 'dry.weight', 'shell.dry.weight',
-                                      'CI', 'dat.filter', 'dat.count', 
-                                      'observer'), summarize, sum = sum(value))
-
-
+oystersizesums <-
+  ddply(
+    oysterdep4,
+    c(
+      'id',
+      'sampleday',
+      'size.cat',
+      'Table',
+      'Tank',
+      'DOFSample',
+      'length',
+      'width',
+      'depth',
+      'dry.weight',
+      'shell.dry.weight',
+      'CI',
+      'dat.filter',
+      'dat.count',
+      'observer'
+    ),
+    summarize,
+    sum = sum(value)
+  )
 
 ## Now calculate proportions of each particle size category present in each 
 ## sample for each sampling day
@@ -193,8 +200,7 @@ for(i in 1:nrow(oysterprop)) {
 ## Put the size categories in order
 
 oysterprop$size.cat <- factor(oysterprop$size.cat,
-                              levels = c("10-100",
-                                         "100-500",
+                              levels = c("100-500",
                                          "500-1000",
                                          "1000-5000"))
 
@@ -206,8 +212,7 @@ ggplot(oysterprop, aes(x=sampleday, y=100*prop, fill = size.cat)) +
   ylab('Average percent') +
   guides(fill=guide_legend(title="Particle size category \n (microns)")) +
   theme_bw() +
-  scale_fill_manual(values = c('grey0',
-                               'grey25',
+  scale_fill_manual(values = c('grey25',
                                'grey50',
                                'grey75')) +
   theme(legend.text = element_text(size=12), text = element_text(size=12), 
@@ -230,12 +235,28 @@ Now with particle type/colour
 ## First we need to make a new data frame of sums according to each particle
 ## type/colour
 
-oystertypesums <- ddply(oysterdep4, c('id', 'sampleday', 'Table', 
-                                      'Tank', 'DOFSample', 'length', 'width',
-                                      'depth', 'dry.weight', 'shell.dry.weight',
-                                      'CI', 'dat.filter', 'dat.count', 
-                                      'observer', 'variable'), summarize, 
-                        sum = sum(value))
+oystertypesums <- ddply(
+  oysterdep4,
+  c(
+    'id',
+    'sampleday',
+    'Table',
+    'Tank',
+    'DOFSample',
+    'length',
+    'width',
+    'depth',
+    'dry.weight',
+    'shell.dry.weight',
+    'CI',
+    'dat.filter',
+    'dat.count',
+    'observer',
+    'variable'
+  ),
+  summarize,
+  sum = sum(value)
+)
 
 
 
@@ -271,16 +292,13 @@ ggplot(oystertypeprop, aes(x = sampleday, y = 100 * prop, fill = variable)) +
     values = c(
       'Grey16',
       'Steel Blue',
-      'Navy',
       'Grey90',
-      'Forest Green',
       'Orange',
       'Pink',
       'Red',
-      'Red3',
       'Turquoise',
       'White',
-      'Gold'
+      'Yellow'
     )
   ) +
   theme(
@@ -443,9 +461,14 @@ depblanks3 <- depblanks3[c('id', 'size.cat', 'sampleday', 'DOFSample',
 head(depblanks3)  # now 'variable' is particle category and 'value is the count'
 ```
 
-Now sum by totals across all samples and particles sizes to get an idea of what we're working with.
+Now sum by totals across all samples and particles sizes to get an idea of what we're working with. First remove particles less than 100 microns as we're not confident in them.
 
 ```{r}
+depblanks3 <- subset(depblanks3, size.cat != '20-50' & size.cat != '50-100')
+
+depblanks3$size.cat <- as.character(depblanks3$size.cat)
+depblanks3$size.cat <- as.factor(depblanks3$size.cat)
+
 cat.sums.blanks <- aggregate(depblanks3$value ~ 
                                depblanks3$variable, FUN = sum)  # sums everything
 print(cat.sums.blanks)
@@ -456,8 +479,7 @@ So we can remove the red, yellow, green turquoise, purple, gray, brown, orange, 
 ```{r}
 depblanks4 <- subset(depblanks3, 
                      c(variable == 'clear.fib' | 
-                         variable == 'black.fib' |
-                         variable == 'blu.frag')
+                         variable == 'black.fib')
                      )  # keep only these rows
 
 depblanks4$variable <- as.character(depblanks4$variable)
@@ -471,27 +493,11 @@ Let's make the category names a bit more useful for plotting
 ```{r}
 depblanks4$variable <- mapvalues(depblanks4$variable,
                                  from = c(levels(depblanks4$variable)), 
-                                 to = c('Black fibres',  
-                                        'Blue fragments',
+                                 to = c('Black fibres',
                                         'Clear fibres'))
 
 summary(depblanks4$variable)
 ```
-
-Let's combine all size categories below 100 microns, since we weren't very confident in identifying these size classesso it makes more sense to pool them.
-
-```{r}
-depblanks4$size.cat <-
-  mapvalues(
-    depblanks4$size.cat,
-    from = c('20-50', '50-100'),
-    to = c('10-100', '10-100')
-  )  ## pool <100 micron particles
-
-depblanks4 <- ddply(depblanks4, names(depblanks4)[-9], summarize,
-                   value = sum(value))
-```
-
 
 Next let's make plots of the distribution of sizes and particle types and colours.
 
@@ -539,7 +545,7 @@ ggplot(blanksprop, aes(x=sampleday, y=100*prop, fill = size.cat)) +
   ylab('Average percent') +
   guides(fill=guide_legend(title="Particle size category \n (microns)")) +
   theme_bw() +
-  scale_fill_manual(values = c('grey0', 'grey25', 'grey50', 'grey75')) +
+  scale_fill_manual(values = c('grey25', 'grey50', 'grey75')) +
   theme(legend.text = element_text(size=12), text = element_text(size=12), 
         panel.spacing = unit(1, "lines"),  
         axis.text.x = element_text(size = 12),
@@ -591,7 +597,7 @@ ggplot(blankstypeprop, aes(x=sampleday, y=100*prop, fill = variable)) +
   ylab('Average percent') +
   guides(fill=guide_legend(title="Particle size category \n (microns)")) +
   theme_bw() +
-  scale_fill_manual(values = c('Black', 'Steel Blue', 'Grey50')) +
+  scale_fill_manual(values = c('Grey16', 'Grey90')) +
   theme(legend.text = element_text(size=12), text = element_text(size=12), 
         panel.spacing = unit(1, "lines"),  
         axis.text.x = element_text(size = 12),
@@ -632,18 +638,15 @@ ggplot(totalblanksums, aes(x=sampleday, y=sum)) +
 Now do the same summary stats for the blanks
 
 ```{r}
-## Means, range, and SD
+## medians, range, and SD
 
-with(totalblanksums, tapply(sum, DOFSample, mean))  # takes mean for each day
+with(totalblanksums, tapply(sum, DOFSample, median))  # takes median for each day
 with(totalblanksums, tapply(sum, DOFSample, min))  # takes minimum for each day
 with(totalblanksums, tapply(sum, DOFSample, max))  # takes maximum for each day
 with(totalblanksums, tapply(sum, 
                        DOFSample, sd))  # takes standard deviation for each day
 
 ## Proportions of particles sizes
-
-sum(depblanks4$value[depblanks4$size.cat == '10-100'])/
-  sum(depblanks4$value)*100 
 
 sum(depblanks4$value[depblanks4$size.cat == '100-500'])/
   sum(depblanks4$value)*100
@@ -732,7 +735,7 @@ ggplot(oysterprop2, aes(x=sampleday, y=100*prop, fill = size.cat)) +
   ylab('Average percent') +
   guides(fill=guide_legend(title="Particle size category \n (microns)")) +
   theme_bw() +
-  scale_fill_manual(values = c('grey0', 'grey25', 'grey50', 'grey75')) +
+  scale_fill_manual(values = c('grey25', 'grey50', 'grey75')) +
   theme(legend.text = element_text(size=12), text = element_text(size=12), 
         panel.spacing = unit(1, "lines"),  
         axis.text.x = element_text(size = 12),
@@ -793,16 +796,13 @@ ggplot(oystertypeprop2, aes(x = sampleday, y = 100 * prop, fill = variable)) +
     values = c(
       'Grey16',
       'Steel Blue',
-      'Navy',
       'Grey90',
-      'Forest Green',
       'Orange',
       'Pink',
       'Red',
-      'Red3',
       'Turquoise',
       'White',
-      'Gold'
+      'Yellow'
     )
   ) +
   theme(
@@ -840,7 +840,7 @@ totalsums2 <- ddply(oysterdep5, c('id', 'sampleday', 'Table', 'Tank',
 ggplot(totalsums2, aes(x=sampleday , y=sum)) + 
   geom_boxplot(position=position_dodge(), size=1) + 
   xlab('Day') + 
-  coord_cartesian(ylim = c(0, 13)) +
+  coord_cartesian(ylim = c(0, 10)) +
   ylab('# AFs') +
   guides(fill=FALSE) +
   theme_bw() +
@@ -891,9 +891,6 @@ with(totalsums2, tapply(sum/dry.weight,
                        sampleday, sd))  # takes standard deviation for each day
 
 ## Proportions of particles sizes
-
-sum(oystersizesums2$sum[oystersizesums2$size.cat == '10-100'])/
-  sum(oystersizesums2$sum)*100
 
 sum(oystersizesums2$sum[oystersizesums2$size.cat == '100-500'])/
   sum(oystersizesums2$sum)*100
@@ -965,9 +962,14 @@ depwater3 <- depwater3[c('id', 'day', 'size.cat', 'Table', 'Tank', 'DOFSample',
 head(depwater3)  # now 'variable' is particle category and 'value is the count'
 ```
 
-Now sum by totals across all samples and particles sizes to get an idea of what we're working with.
+Now sum by totals across all samples and particles sizes to get an idea of what we're working with. First remove particles <100 microns as we don't trust these counts.
 
 ```{r}
+depwater3 <- subset(depwater3, size.cat != '20-50' & size.cat != '50-100')
+
+depwater3$size.cat <- as.character(depwater3$size.cat)
+depwater3$size.cat <- as.factor(depwater3$size.cat)
+
 cat.sums.blanks <- aggregate(depwater3$value ~ 
                                depwater3$variable, FUN = sum)  # sums everything
 print(cat.sums.blanks)
@@ -1002,25 +1004,10 @@ depwater4$variable <- factor(depwater4$variable,
 summary(depwater4$variable)
 ```
 
-Let's combine all size categories below 100 microns, since we weren't very confident in identifying these size classesso it makes more sense to pool them.
-
-```{r}
-depwater4$size.cat <-
-  mapvalues(
-    depwater4$size.cat,
-    from = c('20-50', '50-100'),
-    to = c('10-100', '10-100')
-  )  ## pool <100 micron particles
-
-depwater4 <- ddply(depwater4, names(depwater4)[-11], summarize,
-                   value = sum(value))
-```
-
 Now do all these same things for the water blanks.
 
 ```{r}
-waterblanks <- 
-  read.csv("~/GRAD school/ACRDP/Depuration/Data/Analysis/waterblanks.csv")
+waterblanks <- read.csv("waterblanks.csv")
 
 head(waterblanks)
 
@@ -1070,9 +1057,16 @@ waterblanks3 <- waterblanks3[c('id', 'day', 'size.cat', 'Table', 'Tank', 'DOFSam
 head(waterblanks3)  # now 'variable' is particle category and 'value is the count'
 ```
 
-Now sum by totals across all samples and particles sizes to get an idea of what we're working with.
+Now sum by totals across all samples and particles sizes to get an idea of what we're working with. First remove <100 micron particles.
 
 ```{r}
+waterblanks3 <- subset(waterblanks3, 
+                       size.cat != '20-50' & 
+                         size.cat != '50-100')
+
+waterblanks3$size.cat <- as.character(waterblanks3$size.cat)
+waterblanks3$size.cat <- as.factor(waterblanks3$size.cat)
+
 cat.sums.blanks <- aggregate(waterblanks3$value ~ 
                                waterblanks3$variable, FUN = sum)  # sums everything
 print(cat.sums.blanks)
@@ -1100,19 +1094,6 @@ summary(waterblanks4$variable)
 ```
 
 Let's combine all size categories below 100 microns, since we weren't very confident in identifying these size classesso it makes more sense to pool them.
-
-```{r}
-waterblanks4$size.cat <-
-  mapvalues(
-    waterblanks4$size.cat,
-    from = c('20-50', '50-100'),
-    to = c('10-100', '10-100')
-  )  ## pool <100 micron particles
-
-waterblanks4 <- ddply(waterblanks4, names(waterblanks4)[-11], summarize,
-                   value = sum(value))
-```
-
 
 Now subtract the blank counts from the appropriate size and shape categories for the water counts.
 
@@ -1177,12 +1158,12 @@ waterprop3$size.cat <- factor(waterprop3$size.cat,
 ## Now plot
 
 ggplot(waterprop3, aes(x=day, y=100*mean, fill = size.cat)) + 
-  geom_col(size = 1) + 
+  geom_col(size = 1, colour = 'black') + 
   xlab('Sampling Day') + 
   ylab('Average percent') +
   guides(fill=guide_legend(title="Particle size category \n (microns)")) +
   theme_bw() +
-  scale_fill_manual(values = c("#009E73", "#56B4E9", "#0072B2", "black")) +
+  scale_fill_manual(values = c("grey25", "grey50", "grey75")) +
   theme(legend.text = element_text(size=12), text = element_text(size=12), 
         panel.spacing = unit(1, "lines"),  
         axis.text.x = element_text(size = 12),
@@ -1231,7 +1212,7 @@ ggplot(watertypeprop3, aes(x=day, y=100*mean, fill = variable)) +
   ylab('Average percent') +
   guides(fill=guide_legend(title="Particle size category \n (microns)")) +
   theme_bw() +
-  scale_fill_manual(values = c('blue', 'grey90', 'red', 'turquoise')) +
+  scale_fill_manual(values = c('steel blue', 'grey90', 'red', 'turquoise')) +
   theme(legend.text = element_text(size=12), text = element_text(size=12), 
         panel.spacing = unit(1, "lines"),  
         axis.text.x = element_text(size = 12),
@@ -1272,18 +1253,15 @@ ggplot(totalwatersums, aes(x=day, y=sum)) +
 Now run the same summary stats for the water samples.
 
 ```{r}
-## Means, range, and SD
+## medians, range, and SD
 
-with(totalwatersums, tapply(sum, day, mean))  # takes mean for each day
+with(totalwatersums, tapply(sum, day, median))  # takes median for each day
 with(totalwatersums, tapply(sum, day, min))  # takes minimum for each day
 with(totalwatersums, tapply(sum, day, max))  # takes maximum for each day
 with(totalwatersums, tapply(sum, 
                        day, sd))  # takes standard deviation for each day
 
 ## Proportions of particles sizes
-
-sum(depwater4$value[depwater4$size.cat == '10-100'])/
-  sum(depwater4$value)*100
 
 sum(depwater4$value[depwater4$size.cat == '100-500'])/
   sum(depwater4$value)*100
@@ -1339,8 +1317,8 @@ predictions <- data.frame(predict(M1,
 totalsums3 <- cbind(totalsums2, predictions)
 
 totalsums3$mean <- exp(totalsums3$fit)
-totalsums3$upper <- exp(with(totalsums3, fit + se.fit))
-totalsums3$lower <- exp(with(totalsums3, fit - se.fit))
+totalsums3$upper <- exp(with(totalsums3, fit + 1.96*se.fit))
+totalsums3$lower <- exp(with(totalsums3, fit - 1.96*se.fit))
 
 ggplot(totalsums3) +
   geom_ribbon(aes(x = dry.weight,
@@ -1353,7 +1331,12 @@ ggplot(totalsums3) +
             size = 1) +
   geom_point(aes(x = dry.weight,
                  y = sum)) +
-  facet_grid(. ~ sampleday) +
+  facet_grid(. ~ sampleday,
+             labeller = as_labeller(c('0' = 'Day 0',
+                                      '1' = 'Day 1',
+                                      '3' = 'Day 3',
+                                      '5' = 'Day 5',
+                                      '10' = 'Day 10'))) +
   labs(x = 'Dry tissue weight (g)',
        y = 'Number of anthropogenic particle') +
   theme1
