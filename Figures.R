@@ -3,45 +3,97 @@ library(cowplot)
 
 ## Figure 2
 
-Plot1 <- 
-  ggplot(totalblanksums) + 
-  geom_jitter(aes(x = 1, 
-                  y = sum),
-              size=0.5) + 
-  ylab(expression(paste('# APs'~sample^-1))) +
+Plot1 <-
+  ggplot(totalblanksums[-c(1, 3, 5, 11, 13, 15),]) +
+  geom_jitter(aes(x = factor(
+    c(rep("Days 0 & 1", 3),
+      rep("Day 3", 3),
+      rep("Days 5 & 10", 3)),
+    ordered = TRUE,
+    levels = c("Days 0 & 1",
+               "Day 3",
+               "Days 5 & 10")
+  ),
+  y = sum),
+  size = 1,
+  width = 0.2,
+  height = 0,
+  shape = 1) +
+  ylab(expression(paste('# APs' ~ sample ^ -1))) +
   xlab("") +
-  guides(fill=FALSE) +
+  guides(fill = FALSE) +
   theme_bw() +
-  coord_cartesian(ylim = c(0,3)) +
+  coord_cartesian(ylim = c(0, 2.5)) +
+  scale_y_continuous(breaks = c(0, 1, 2)) +
   theme1 +
-  theme(axis.text.x = element_blank(),
-        axis.ticks.x = element_blank())
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_text(angle = 45,
+                                   hjust = 1))
 
 Plot2 <-
-  ggplot(blanksprop, aes(x = sampleday, y = 100 * prop, fill = size.cat)) +
-  geom_col(size = 0.25, colour = 'black') +
-  xlab('Sampling day') +
+  ggplot(blanksprop[c(1:3, 7:9, 13:15),]) +
+  geom_col(aes(
+    x = factor(
+      c(rep("Days 0 & 1", 3),
+        rep("Day 3", 3),
+        rep("Days 5 & 10", 3)),
+      ordered = TRUE,
+      levels = c("Days 0 & 1",
+                 "Day 3",
+                 "Days 5 & 10")
+    ),
+    y = 100 * prop,
+    fill = size.cat
+  ),
+  size = 0.25,
+  colour = 'black') +
+  xlab('') +
   ylab('Percent') +
   guides(fill = guide_legend(title = expression(paste(
     "Particle size category (" * mu * "m)"
   )))) +
-  theme_bw() +
   scale_fill_manual(values = c('grey25', 'grey50', 'grey75')) +
-  theme1
+  theme1 +
+  theme(legend.key.size = unit(0.5, "cm"),
+        legend.box.spacing = unit(0.1, "cm"),
+        axis.text.x = element_blank())
 
-Plot3 <- 
-  ggplot(blankstypeprop, aes(x=sampleday, y=100*prop, fill = variable)) + 
-  geom_col(size = 0.25, colour = 'black') + 
-  xlab('Sampling day') + 
+Plot3 <-
+  ggplot(blankstypeprop[c(1:2, 5:8), ], aes(
+    x = factor(
+      c(rep("Days 0 & 1", 2),
+        rep("Day 3", 2),
+        rep("Days 5 & 10", 2)),
+      ordered = TRUE,
+      levels = c("Days 0 & 1",
+                 "Day 3",
+                 "Days 5 & 10")
+    ),
+    y = 100 * prop,
+    fill = variable
+  )) +
+  geom_col(size = 0.25, colour = 'black') +
+  xlab('Sampling day') +
   ylab('Percent') +
-  guides(fill=guide_legend(title="Particle type")) +
-  theme_bw() +
+  guides(fill = guide_legend(title = "Particle type")) +
   scale_fill_manual(values = c('Grey16', 'Grey90')) +
-  theme1
+  theme1 +
+  theme(legend.key.size = unit(0.5, "cm"),
+        legend.box.spacing = unit(0.1, "cm"),
+        axis.text.x = element_text(angle = 45,
+                                   hjust = 1))
 
-Plot4 <- plot_grid(Plot2, Plot3, align = 'v', nrow = 2, ncol = 1, 
-                   rel_widths = c(1,1), 
-               rel_heights = c(1,1), labels = c('B','C'), label_size = 8)
+Plot4 <- plot_grid(
+  Plot2,
+  Plot3,
+  align = 'v',
+  nrow = 2,
+  ncol = 1,
+  rel_widths = c(1, 1),
+  rel_heights = c(1, 1.4),
+  labels = c('B', 'C'),
+  label_size = 8
+)
 
 png(
   filename = "Figure 2.png",
@@ -52,7 +104,7 @@ png(
   res = 600
 )
 
-plot_grid(Plot1, Plot4, nrow = 1, ncol = 2, rel_widths = c(1, 3),
+plot_grid(Plot1, Plot4, nrow = 1, ncol = 2, rel_widths = c(1, 2.5),
           rel_heights = c(1, 1), labels = c('A', ''), label_size = 8)
 
 dev.off()

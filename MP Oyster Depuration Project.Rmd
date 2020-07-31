@@ -408,7 +408,7 @@ oystersummarytable <- oystersummarytable/sum(oysterdep4$value)*100
 print(oystersummarytable)
 ```
 
-## Blanks
+## Oyster blanks
 Now load in the blanks dataset and set it up for plotting, same as with the oyster data set. First we load in the data.
 
 ```{r}
@@ -908,6 +908,8 @@ oystersummarytable <- oystersummarytable/sum(oystertypesums2$sum)*100
 print(oystersummarytable)
 ```
 
+## Water data
+
 Now load in the water sample data.
 
 ```{r}
@@ -1004,6 +1006,8 @@ depwater4$variable <- factor(depwater4$variable,
 summary(depwater4$variable)
 ```
 
+## Water blanks
+
 Now do all these same things for the water blanks.
 
 ```{r}
@@ -1092,6 +1096,8 @@ waterblanks4$variable <- mapvalues(waterblanks4$variable,
 
 summary(waterblanks4$variable)
 ```
+
+## Adjusted water data
 
 Let's combine all size categories below 100 microns, since we weren't very confident in identifying these size classesso it makes more sense to pool them.
 
@@ -1279,7 +1285,94 @@ watersummarytable <- watersummarytable/sum(depwater4$value)*100
 print(watersummarytable)
 ```
 
-## Statistics
+## Algae data
+
+Now load in the algae sample data.
+
+```{r}
+algae <- 
+  read.csv("algae.csv")
+
+head(algae)
+
+algae$id <- as.factor(algae$id)
+algae$size.cat <- as.factor(algae$size.cat)
+```
+
+Now we make a new dataframe to work with and rename size categories.
+
+```{r}
+algae2 <- algae
+
+algae2$size.cat <- factor(algae2$size.cat, 
+                              levels=c('twentyto50', 'fiftyto100',
+                                       'onehundredto500', 'fivehundredto1000', 
+                                       'onethousandto5000'))  # reorder
+
+
+algae2$size.cat <- mapvalues(algae2$size.cat, 
+                                 from = c('twentyto50', 'fiftyto100', 
+                                          'onehundredto500', 
+                                          'fivehundredto1000', 
+                                          'onethousandto5000'), 
+                                 to = c('20-50', '50-100', '100-500',
+                                        '500-1000', '1000-5000'))  # rename
+summary(algae2$size.cat)  # view
+```
+
+Again, we melt the dataframe so that the particle types are organized by row instead of by column.
+
+```{r}
+algae3 <- melt(algae2,
+                   id.vars = c('id', 'size.cat'))
+
+head(algae3)  # now 'variable' is particle category and 'value is the count'
+```
+
+Now sum by totals across all samples and particles sizes to get an idea of what we're working with. First remove particles <100 microns as we don't trust these counts.
+
+```{r}
+algae3 <- subset(algae3, size.cat != '20-50' & size.cat != '50-100')
+
+algae3$size.cat <- as.character(algae3$size.cat)
+algae3$size.cat <- as.factor(algae3$size.cat)
+
+cat.sums.blanks <- aggregate(algae3$value ~ 
+                               algae3$variable, FUN = sum)  # sums everything
+print(cat.sums.blanks)
+```
+
+So we can remove the yellow, green, purple, gray, pink, brown, orange, and black fibre categories, and all other categories as well.
+
+```{r}
+algae4 <- subset(algae3, c(variable == 'red.fib' | 
+                             variable == 'clear.fib'))  # keep only these rows
+
+algae4$variable <- as.character(algae4$variable)
+algae4$variable <- as.factor(algae4$variable)  # gets rid of those names
+
+summary(algae4$variable)  # view
+```
+
+Let's make the category names a bit more useful for plotting
+
+```{r}
+algae4$variable <- mapvalues(algae4$variable,
+                                 from = c(levels(algae4$variable)), 
+                                 to = c('Blue fibres', 'Clear fibres', 
+                                        'Red fibres', 'Turquoise fibres'))
+
+## And reorder them
+algae4$variable <- factor(algae4$variable, 
+                              levels = c('Blue fibres', 'Clear fibres',
+                                         'Red fibres', 'Turquoise fibres'))
+
+summary(algae4$variable)
+```
+
+
+## Oyster statistics
+
 Now fit a generalized linear mixed model (GLMM) to the oyster data using the package glmmTMB to determine differences over time. We'll specify AF count as the response variable, sampling day as the predictor, and tank nested within table as the random, or mixed, effects. You'll notice that sample day is specified twice. The second time is to set it up as the intercept for the random effect, which will allow the linear relationship between AP sum and sampling day to vary in both slope and intercept according separately within each tank, within each table. This accounts for any the variation that may have been caused by any variables that we did not account for and may have varied somehow in different tanks and or/tables.
 
 ```{r}
