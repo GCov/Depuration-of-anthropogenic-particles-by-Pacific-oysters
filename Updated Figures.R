@@ -103,7 +103,8 @@ algae_colour_plot <-
   scale_fill_manual(values = c("steel blue", "grey90", "red", "turquoise")) +
   theme1 + 
   theme(plot.margin = margin(0.5,0,0,0, unit = "cm"),
-        legend.position = "none") +
+        legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1, face = "italic")) +
   scale_x_discrete(expand = c(0,0.5)) + 
   scale_y_continuous(expand = c(0.03,0))
 
@@ -144,15 +145,15 @@ grid2 <-
             align = "h",
             rel_widths = c(1, 0.6))
 
-grid3 <- plot_grid(grid2, 
-                   oysters_colour_plot,
+grid3 <- plot_grid(oysters_colour_plot,
+                   grid2, 
                    nrow = 2,
-                   labels = c("", "Oysters"),
+                   labels = c("Oysters", ""),
                    label_size = 8)
 
 tiff("Depuration Colour Plots.tiff",
      width = 14,
-     height = 16,
+     height = 17,
      units = "cm",
      compression = "none",
      res = 500)
@@ -166,7 +167,7 @@ dev.off()
 
 tiff("Model fit.tiff",
      width = 9,
-     height = 9,
+     height = 7,
      units = "cm",
      compression = "none",
      res = 500)
@@ -175,17 +176,29 @@ ggplot() +
   geom_ribbon(data = predictions,
               aes(x = sampleday,
                   ymin = lower,
-                  ymax = upper),
-              fill = "steel blue",
+                  ymax = upper,
+                  fill = length),
               alpha = 0.5) +
   geom_line(data = predictions,
             aes(x = sampleday,
-                y = mean)) +
+                y = mean,
+                colour = length),
+            size = 1) +
   geom_point(data = totalsums,
              aes(x = sampleday,
-                 y = sum)) +
+                 y = sum),
+             size = 0.75) +
+  scale_colour_brewer(type = "qual",
+                      palette = "Set2",
+                      name = "Length (mm)") +
+  
+  scale_fill_brewer(type = "qual",
+                    palette = "Set2",
+                    name = "Length (mm)") +
+  scale_x_continuous(breaks = c(0, 1, 3, 5, 10)) +
   labs(x = "Day",
-       y = "Number of anthropogenic particles") +
+       y = expression(paste("APs"~ind^-1))) +
   theme1
 
 dev.off()
+

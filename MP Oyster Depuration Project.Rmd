@@ -628,7 +628,7 @@ Let"s print out some summary stats.
 ```{r}
 ## Summary stats according to count per individual
 
-with(totalsums2, tapply(sum, sampleday, median))  # takes median for each day
+with(totalsums2, tapply(sum, sampleday, mean))  # takes mean for each day
 with(totalsums2, tapply(sum, sampleday, min))  # takes minimum for each day
 with(totalsums2, tapply(sum, sampleday, max))  # takes maximum for each day
 with(totalsums2, tapply(sum, 
@@ -637,7 +637,7 @@ with(totalsums2, tapply(sum,
 ## Summary stats according to concentration
 
 with(totalsums2, tapply(sum/dry.weight, 
-                       sampleday, median))  # takes median for each day
+                       sampleday, mean))  # takes mean for each day
 with(totalsums2, tapply(sum/dry.weight, 
                        sampleday, min))  # takes minimum for each day
 with(totalsums2, tapply(sum/dry.weight, 
@@ -1012,7 +1012,7 @@ totalwatersums <- ddply(depwater5, c("id", "day", "Table", "Tank", "observer",
 ggplot(totalwatersums, aes(x=day, y=sum)) + 
   geom_boxplot(position=position_dodge(), size=1) + 
   xlab("Day") +
-  ylab("# AFs") +
+  ylab(expression(paste("# AFs"~L^-1))) +
   guides(fill=FALSE) +
   theme_bw() +
   theme(text = element_text(size=12), 
@@ -1036,19 +1036,19 @@ with(totalwatersums, tapply(sum,
 
 ## Proportions of particles sizes
 
-sum(depwater4$value[depwater4$size.cat == "100-500"])/
-  sum(depwater4$value)*100
+sum(depwater5$finalcount[depwater5$size.cat == "100-500"])/
+  sum(depwater5$finalcount)*100
 
-sum(depwater4$value[depwater4$size.cat == "500-1000"])/
-  sum(depwater4$value)*100
+sum(depwater5$finalcount[depwater5$size.cat == "500-1000"])/
+  sum(depwater5$finalcount)*100
 
-sum(depwater4$value[depwater4$size.cat == "1000-5000"])/
-  sum(depwater4$value)*100
+sum(depwater5$finalcount[depwater5$size.cat == "1000-5000"])/
+  sum(depwater5$finalcount)*100
 
 ## This provides the percentage of total particles found accounted for by each 
 ## colour/type of particles
-watersummarytable <- with(depwater4, tapply(value, variable, sum))
-watersummarytable <- watersummarytable/sum(depwater4$value)*100
+watersummarytable <- with(depwater5, tapply(value, variable, sum))
+watersummarytable <- watersummarytable/sum(depwater5$finalcount)*100
 print(watersummarytable)
 ```
 
@@ -1168,9 +1168,9 @@ Now plot particle size proportions for algae.
 ## First we need to make a new data frame of sums according to each size category
 
 algaesizesums <- 
-  ddply(algae4, 
+  ddply(algae5, 
         c("id", "size.cat", "species"), 
-        summarize, sum = sum(value))
+        summarize, sum = sum(finalcount))
 
 
 
@@ -1227,11 +1227,11 @@ Now with particle type/colour
 ## type/colour
 
 algaetypesums <- 
-  ddply(algae4, 
+  ddply(algae5, 
         c("id", 
           "variable",
           "species"),
-        summarize, sum = sum(value))
+        summarize, sum = sum(finalcount))
 
 
 
@@ -1279,6 +1279,58 @@ ggplot(algaetypeprop, aes(x=species, y=100*prop, fill = variable)) +
 
 ```
 
+Take total sums and plot the results.
+
+```{r}
+totalalgaesums <- ddply(algae5, 
+                        c("id", "species"),
+                        summarise, sum = sum(finalcount))  # adds all the counts together
+
+## Plot according to count per filtration day
+
+ggplot(totalalgaesums, aes(x=species, y=sum)) + 
+  geom_boxplot(position=position_dodge(), size=1) + 
+  xlab("Species") +
+  ylab(expression(paste("# AFs 500"~mL^-1))) +
+  guides(fill=FALSE) +
+  theme_bw() +
+  theme(text = element_text(size=12), 
+        axis.text.x = element_text(size = 12,
+                                   face = "italic"),
+        axis.text.y = element_text(size = 12),
+        strip.background = element_blank(),
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank())
+```
+
+Now run the same summary stats for the algae samples.
+
+```{r}
+## medians, range, and SD
+
+with(totalalgaesums, tapply(sum, species, median))  # takes median for each species
+with(totalalgaesums, tapply(sum, species, min))  # takes minimum for each species
+with(totalalgaesums, tapply(sum, species, max))  # takes maximum for each species
+with(totalalgaesums, tapply(sum, 
+                       species, sd))  # takes standard deviation for each species
+
+## Proportions of particles sizes
+
+sum(algae5$finalcount[algae5$size.cat == "100-500"])/
+  sum(algae5$finalcount)*100
+
+sum(algae5$finalcount[algae5$size.cat == "500-1000"])/
+  sum(algae5$finalcount)*100
+
+sum(algae5$finalcount[algae5$size.cat == "1000-5000"])/
+  sum(algae5$finalcount)*100
+
+## This provides the percentage of total particles found accounted for by each 
+## colour/type of particles
+algaesummarytable <- with(algae5, tapply(value, variable, sum))
+algaesummarytable <- algaesummarytable/sum(algae5$finalcount)*100
+print(algaesummarytable)
+```
 
 ## Oyster statistics
 
@@ -1312,13 +1364,15 @@ Sample day significant (p<0.001), oyster length not significant (p = 0.0787).
 predictions <- 
   data.frame(sampleday = seq(from = 0,
                               to = 10,
-                              length.out = nrow(totalsums)),
-             length = rep(mean(totalsums$length, 
-                               nrow(totalsums))),
-             Table = rep(NA,
-                         nrow(totalsums)),
-             Tank = rep(NA,
-                        nrow(totalsums)))
+                              length.out = 1000),
+             length = with(totalsums,
+                           sample(c(min(length),
+                                    median(length),
+                                    max(length)),
+                                  1000,
+                                  replace = TRUE)),
+             Table = rep(NA, 1000),
+             Tank = rep(NA, 1000))
 
 new.predict <-
   predict(M1,
@@ -1327,24 +1381,35 @@ new.predict <-
           type = "link",
           se.fit = TRUE)
 
-predictions$mean <-
-  exp(new.predict$fit)
-predictions$upper <- exp(with(new.predict, fit + 1.96*se.fit))
-predictions$lower <- exp(with(new.predict, fit - 1.96*se.fit))
+predictions$mean <- exp(new.predict$fit) - 1
+predictions$upper <- exp(with(new.predict, fit + 1.96*se.fit)) - 1
+predictions$lower <- exp(with(new.predict, fit - 1.96*se.fit)) - 1
+
+predictions$length <- as.factor(predictions$length)
 
 ggplot() +
   geom_ribbon(data = predictions,
               aes(x = sampleday,
                   ymin = lower,
-                  ymax = upper),
-                  fill = "steel blue",
+                  ymax = upper,
+                  fill = length),
               alpha = 0.5) +
   geom_line(data = predictions,
             aes(x = sampleday,
-                y = mean)) +
+                y = mean,
+                colour = length),
+            size = 1) +
   geom_point(data = totalsums,
              aes(x = sampleday,
-                 y = sum)) +
+                 y = sum),
+             size = 0.75) +
+  scale_colour_brewer(type = "qual",
+                      palette = "Set2",
+                      name = "Length (mm)") +
+
+  scale_fill_brewer(type = "qual",
+                    palette = "Set2",
+                    name = "Length (mm)") +
   labs(x = "Day",
        y = "Number of anthropogenic particles") +
   theme1
