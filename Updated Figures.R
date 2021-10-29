@@ -145,10 +145,10 @@ grid2 <-
             align = "h",
             rel_widths = c(1, 0.6))
 
-grid3 <- plot_grid(oysters_colour_plot,
-                   grid2, 
+grid3 <- plot_grid(grid2,
+                   oysters_colour_plot,
                    nrow = 2,
-                   labels = c("Oysters", ""),
+                   labels = c("", "Oysters"),
                    label_size = 8)
 
 tiff("Depuration Colour Plots.tiff",
@@ -194,7 +194,7 @@ ggplot() +
   
   scale_fill_brewer(type = "qual",
                     palette = "Set2",
-                    name = "Length (mm)") +
+                    name = "Oyster Shell \nWidth (mm)") +
   scale_x_continuous(breaks = c(0, 1, 3, 5, 10)) +
   labs(x = "Day",
        y = expression(paste("APs"~ind^-1))) +
