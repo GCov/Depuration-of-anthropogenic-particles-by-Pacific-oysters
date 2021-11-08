@@ -202,3 +202,98 @@ ggplot() +
 
 dev.off()
 
+
+
+
+daylabs <- c("Day 0", 
+             "Day 1", 
+             "Day 3", 
+             "Day 5", 
+             "Day 10")
+names(daylabs) <- c(0, 1, 3, 5, 10)
+
+waterplot <- 
+  ggplot(depwater5) +
+  geom_col(aes(x = size.cat,
+               y = finalcount,
+               fill = variable),
+           colour = "black") +
+  scale_fill_manual(values = c("steel blue", "grey90", "red", "turquoise")) +
+  labs(x = expression(paste("Particle size category ("*mu*"m)")),
+       y = "Particle count") +
+  facet_wrap(~day,
+             labeller = labeller(day = daylabs),
+             ncol = 1) +
+  theme1 +
+  theme(legend.position = "none")
+
+algaeplot <-
+  ggplot(algae5) +
+  geom_col(aes(x = size.cat,
+               y = finalcount,
+               fill = variable),
+           colour = "black") +
+  scale_fill_manual(values = c("steel blue", "grey90", "red", "turquoise")) +
+  labs(x = "",
+       y = "Particle count") +
+  facet_wrap(~species,
+             nrow = 1) +
+  theme1 +
+  theme(legend.position = "none",
+        strip.text = element_text(face = "italic"))
+
+
+oysterdep6 <- subset(oysterdep5, finalcount > 0)
+
+oysterdep6$variable <- as.character(oysterdep6$variable)
+oysterdep6$variable <- as.factor(oysterdep6$variable)
+
+oysterplot <- 
+  ggplot(oysterdep6) +
+  geom_col(aes(x = size.cat,
+               y = finalcount,
+               fill = variable),
+           colour = "black") +
+  scale_fill_manual(
+    values = c(
+      "Grey16",
+      "Steel Blue",
+      "Saddle Brown",
+      "Grey90",
+      "Grey70",
+      "Forest Green",
+      "Orange",
+      "Pink",
+      "Red",
+      "Turquoise",
+      "White",
+      "Yellow"
+    )) +
+  labs(x = expression(paste("Particle size category ("*mu*"m)")),
+       y = "") +
+  facet_wrap(~sampleday,
+             labeller = labeller(sampleday = daylabs),
+             ncol = 1) +
+  guides(fill = guide_legend(title = "Particle type")) +
+  theme1
+
+grid1 <- plot_grid(waterplot, oysterplot,
+                   labels = c("Water", "Oysters"),
+                   rel_widths = c(0.7, 1),
+                   label_size = 8)
+
+tiff("Particle Categories Plot.tiff",
+     width = 19,
+     height = 30,
+     units = "cm",
+     compression = "none",
+     res = 500)
+
+plot_grid(grid1, algaeplot,
+          nrow = 2,
+          rel_heights = c(1, 0.25),
+          labels = c("", "Algae"),
+          label_size = 8)
+
+dev.off()
+
