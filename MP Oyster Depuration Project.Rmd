@@ -15,7 +15,6 @@ library(glmmTMB)
 library(MuMIn)
 library(lme4)
 library(dplyr)
-library(DHARMa)
 
 theme1 <-
   theme_bw() +
@@ -1347,10 +1346,6 @@ M1 <-
           data = totalsums) ## Fits a GLMM
 
 summary(M1) # model output
-
-res1 <- simulateResiduals(M1)
-
-plot(res1)
 
 plot(resid(M1) ~ fitted(M1))
 abline(0,0)
