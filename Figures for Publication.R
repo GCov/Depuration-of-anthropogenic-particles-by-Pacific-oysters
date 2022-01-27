@@ -35,8 +35,8 @@ waterplot <-
   scale_fill_manual(values = c("steel blue", "grey90", "red", "turquoise")) +
   labs(x = expression(paste("Particle size category ("*mu*"m)")),
        y = "Particle count") +
-  facet_wrap(~day,
-             labeller = labeller(day = daylabs),
+  facet_wrap(~sampleday,
+             labeller = labeller(sampleday = daylabs),
              nrow = 1) +
   theme1 +
   theme(legend.position = "none",
@@ -114,7 +114,7 @@ tiff("Particle Categories Plot.tiff",
 
 plot_grid(grid1, algaeplot,
           nrow = 1,
-          rel_widths = c(1, 0.24),
+          rel_widths = c(1, 0.26),
           labels = c("", "Algae"),
           label_size = 8)
 
@@ -135,20 +135,21 @@ ggplot() +
               aes(x = sampleday,
                   ymin = lower,
                   ymax = upper,
-                  fill = length),
+                  fill = width),
               alpha = 0.5) +
   geom_line(data = predictions,
             aes(x = sampleday,
                 y = mean,
-                colour = length),
+                colour = width),
             size = 1) +
   geom_point(data = totalsums,
              aes(x = sampleday,
                  y = sum),
-             size = 0.75) +
+             size = 0.75,
+             shape = 21) +
   scale_colour_brewer(type = "qual",
                       palette = "Set2",
-                      name = "Length (mm)") +
+                      name = "Oyster Shell \nWidth (mm)") +
   
   scale_fill_brewer(type = "qual",
                     palette = "Set2",
