@@ -1,7 +1,7 @@
 ---
 title: "MP Oyster Depuration Project"
 author: "Garth C"
-date: "January 9, 2018"
+date: "January 27, 2022"
 output: word_document
 ---
 ## Load libraries
@@ -45,9 +45,8 @@ Get all of the variables into the right format.
 oysterdep$id <- as.factor(oysterdep$id)
 oysterdep$sampleday <- as.factor(oysterdep$sampleday)
 oysterdep$size.cat <- as.factor(oysterdep$size.cat)
-oysterdep$Table <- as.factor(oysterdep$Table)
-oysterdep$Tank <- as.factor(oysterdep$Tank)
-oysterdep$observer <- as.factor(oysterdep$observer)
+oysterdep$table <- as.factor(oysterdep$table)
+oysterdep$tank <- as.factor(oysterdep$tank)
 ```
 
 Make a new dataframe to work with and rename size categories.
@@ -75,8 +74,8 @@ We need to melt the dataframe so that the particle types are organized by row in
 
 ```{r}
 oysterdep3 <- melt(oysterdep2,
-                   id.vars = c("id", "sampleday", "size.cat", "Table",
-                               "Tank", "species", "DOFSample", "length", 
+                   id.vars = c("id", "sampleday", "size.cat", "table",
+                               "tank", "species", "sample.date", "length", 
                                "width", "depth", "cont.weight", 
                                "cont.dryweight", "dry.weight", 
                                "shell.dry.weight", "CI", "time.in.oven", 
@@ -85,10 +84,7 @@ oysterdep3 <- melt(oysterdep2,
 
 ##  Take out unnecessary columns
 
-oysterdep3 <- oysterdep3[c("id", "sampleday", "size.cat", "Table", "Tank", 
-                         "DOFSample", "length", "width", "depth", "dry.weight",
-                         "shell.dry.weight", "CI", "dat.filter", "dat.count",
-                         "observer", "variable", "value")]
+oysterdep3 <- oysterdep3[,c(1:5,7:10,13:15,18:22)]
 
 head(oysterdep3)  # now "variable" is particle category and "value is the count"
 ```
@@ -190,13 +186,13 @@ Again, we melt the dataframe so that the particle types are organized by row ins
 
 ```{r}
 depblanks3 <- melt(depblanks2,
-                   id.vars = c("id", "size.cat", "sampleday", "DOFSample", 
+                   id.vars = c("id", "size.cat", "sampleday", "blankrun", 
                                "time.in.oven", "time.out.oven", "dat.filter",
                                "dat.count", "observer"))
 
 ##  Take out unnecessary columns
 
-depblanks3 <- depblanks3[c("id", "size.cat", "sampleday", "DOFSample", 
+depblanks3 <- depblanks3[c("id", "size.cat", "sampleday", "blankrun", 
                            "dat.filter", "dat.count", "observer", "variable",
                            "value")]
 
@@ -251,7 +247,7 @@ Starting with size
 ## First we need to make a new data frame of sums according to each size category
 
 blankssizesums <- ddply(depblanks4, c("id", "size.cat", "sampleday", 
-                                      "DOFSample",  "dat.filter", "dat.count", 
+                                      "blankrun",  "dat.filter", "dat.count", 
                                       "observer"), summarize, sum = sum(value))
 
 
@@ -310,7 +306,7 @@ Now with particle type/colour
 ## First we need to make a new data frame of sums according to each particle
 ## type/colour
 
-blankstypesums <- ddply(depblanks4, c("id", "sampleday", "DOFSample", 
+blankstypesums <- ddply(depblanks4, c("id", "sampleday", "blankrun", 
                                       "dat.filter", "dat.count", "observer", 
                                       "variable"), 
                         summarize, sum = sum(value))
@@ -362,7 +358,7 @@ Take total sums and plot the results.
 
 ```{r}
 totalblanksums <- ddply(depblanks4, c("id", "sampleday", "observer", 
-                                      "dat.filter", "DOFSample"),
+                                      "dat.filter", "blankrun"),
                    summarise, sum = sum(value))  # adds all the counts together
 
 ## Plot according to count per filtration day
@@ -445,10 +441,11 @@ Now run all of the same code again but for the modified oyster counts.
 ```{r}
 ## First we need to make a new data frame of sums according to each size category
 
-oystersizesums <- ddply(oysterdep5, c("id", "sampleday", "size.cat", "Table", 
-                                      "Tank", "DOFSample", "length", "width",
-                                      "depth", "dry.weight", "shell.dry.weight",
-                                      "CI", "dat.count", "observer"), 
+oystersizesums <- ddply(oysterdep5, c("id", "sampleday", "size.cat", "table", 
+                                      "tank", "sample.date", "length", "width",
+                                      "depth", "dry.weight", 
+                                      "shell.dry.weight", "CI", "dat.count", 
+                                      "observer"), 
                         summarize, sum = sum(finalcount))
 
 
@@ -505,7 +502,7 @@ Now with particle type/colour
 ## type/colour
 
 oystertypesums <- ddply(oysterdep5, 
-                        c("id", "sampleday", "Table", "Tank", "DOFSample", 
+                        c("id", "sampleday", "table", "tank", "sample.date", 
                           "length", "width", "depth", "dry.weight",
                           "shell.dry.weight", "CI", "dat.count", "observer",
                           "variable"),
@@ -584,7 +581,7 @@ Take total sums overall and plot the results.
 
 ```{r}
 totalsums <- ddply(oysterdep5, 
-                   c("id", "sampleday", "Table", "Tank", "length", "width", 
+                   c("id", "sampleday", "table", "tank", "length", "width", 
                      "depth", "dry.weight", "shell.dry.weight", "CI", "observer"),
                    summarise, 
                    sum = sum(finalcount))  # adds all the counts together
@@ -627,38 +624,38 @@ Let"s print out some summary stats.
 ```{r}
 ## Summary stats according to count per individual
 
-with(totalsums2, tapply(sum, sampleday, mean))  # takes mean for each day
-with(totalsums2, tapply(sum, sampleday, min))  # takes minimum for each day
-with(totalsums2, tapply(sum, sampleday, max))  # takes maximum for each day
-with(totalsums2, tapply(sum, 
+with(totalsums, tapply(sum, sampleday, mean))  # takes mean for each day
+with(totalsums, tapply(sum, sampleday, min))  # takes minimum for each day
+with(totalsums, tapply(sum, sampleday, max))  # takes maximum for each day
+with(totalsums, tapply(sum, 
                        sampleday, sd))  # takes standard deviation for each day
 
 ## Summary stats according to concentration
 
-with(totalsums2, tapply(sum/dry.weight, 
+with(totalsums, tapply(sum/dry.weight, 
                        sampleday, mean))  # takes mean for each day
-with(totalsums2, tapply(sum/dry.weight, 
+with(totalsums, tapply(sum/dry.weight, 
                        sampleday, min))  # takes minimum for each day
-with(totalsums2, tapply(sum/dry.weight, 
+with(totalsums, tapply(sum/dry.weight, 
                        sampleday, max))  # takes maximum for each day
-with(totalsums2, tapply(sum/dry.weight, 
+with(totalsums, tapply(sum/dry.weight, 
                        sampleday, sd))  # takes standard deviation for each day
 
 ## Proportions of particles sizes
 
-sum(oystersizesums2$sum[oystersizesums2$size.cat == "100-500"])/
-  sum(oystersizesums2$sum)*100
+sum(oystersizesums$sum[oystersizesums$size.cat == "100-500"])/
+  sum(oystersizesums$sum)*100
 
-sum(oystersizesums2$sum[oystersizesums2$size.cat == "500-1000"])/
-  sum(oystersizesums2$sum)*100
+sum(oystersizesums$sum[oystersizesums$size.cat == "500-1000"])/
+  sum(oystersizesums$sum)*100
 
-sum(oystersizesums2$sum[oystersizesums2$size.cat == "1000-5000"])/
-  sum(oystersizesums2$sum)*100
+sum(oystersizesums$sum[oystersizesums$size.cat == "1000-5000"])/
+  sum(oystersizesums$sum)*100
 
 ## This provides the percentage of total particles found accounted for by each 
 ## colour/type of particles
-oystersummarytable <- with(oystertypesums2, tapply(sum, variable, sum))
-oystersummarytable <- oystersummarytable/sum(oystertypesums2$sum)*100
+oystersummarytable <- with(oystertypesums, tapply(sum, variable, sum))
+oystersummarytable <- oystersummarytable/sum(oystertypesums$sum)*100
 print(oystersummarytable)
 ```
 
@@ -673,10 +670,10 @@ depwater <-
 head(depwater)
 
 depwater$id <- as.factor(depwater$id)
-depwater$day <- as.factor(depwater$day)
+depwater$sampleday <- as.factor(depwater$sampleday)
 depwater$size.cat <- as.factor(depwater$size.cat)
-depwater$Table <- as.factor(depwater$Table)
-depwater$Tank <- as.factor(depwater$Tank)
+depwater$table <- as.factor(depwater$table)
+depwater$tank <- as.factor(depwater$tank)
 depwater$observer <- as.factor(depwater$observer)
 ```
 
@@ -705,15 +702,13 @@ Again, we melt the dataframe so that the particle types are organized by row ins
 
 ```{r}
 depwater3 <- melt(depwater2,
-                   id.vars = c("id", "day", "size.cat", "Table", "Tank", 
-                               "DOFSample", "time.in.oven", "time.out.oven", 
-                               "dat.filter",  "dat.count", "observer"))
+                   id.vars = c("id", "sampleday", "size.cat", "table", "tank", 
+                               "time.in.oven", "time.out.oven", "dat.filter",
+                               "dat.count", "observer"))
 
 ##  Take out unnecessary columns
 
-depwater3 <- depwater3[c("id", "day", "size.cat", "Table", "Tank", "DOFSample", 
-                         "dat.filter", "dat.count", "observer", "variable", 
-                         "value")]
+depwater3 <- depwater3[,-c(6:7)]
 
 head(depwater3)  # now "variable" is particle category and "value is the count"
 ```
@@ -772,10 +767,7 @@ waterblanks <- read.csv("waterblanks.csv")
 head(waterblanks)
 
 waterblanks$id <- as.factor(waterblanks$id)
-waterblanks$day <- as.factor(waterblanks$day)
 waterblanks$size.cat <- as.factor(waterblanks$size.cat)
-waterblanks$Table <- as.factor(waterblanks$Table)
-waterblanks$Tank <- as.factor(waterblanks$Tank)
 waterblanks$observer <- as.factor(waterblanks$observer)
 ```
 
@@ -804,15 +796,9 @@ Again, we melt the dataframe so that the particle types are organized by row ins
 
 ```{r}
 waterblanks3 <- melt(waterblanks2,
-                   id.vars = c("id", "day", "size.cat", "Table", "Tank", 
-                               "DOFSample", "time.in.oven", "time.out.oven", 
-                               "dat.filter",  "dat.count", "observer"))
-
-##  Take out unnecessary columns
-
-waterblanks3 <- waterblanks3[c("id", "day", "size.cat", "Table", "Tank", "DOFSample", 
-                         "dat.filter", "dat.count", "observer", "variable", 
-                         "value")]
+                   id.vars = c("id", "size.cat", "time.in.oven", 
+                               "time.out.oven", "dat.filter",  "dat.count", 
+                               "observer"))
 
 head(waterblanks3)  # now "variable" is particle category and "value is the count"
 ```
@@ -886,12 +872,12 @@ summary(depwater5$finalcount)
 ```{r}
 ## First we need to make a new data frame of sums according to each size category
 
-depwater5$day <- factor(depwater5$day, 
+depwater5$sampleday <- factor(depwater5$sampleday, 
                         levels = 
                           c("0", "1", "3", "5", "10"))  # put in order
 
 watersizesums <- ddply(depwater5, 
-                       c("id", "day", "size.cat", "Table", "Tank", "DOFSample", 
+                       c("id", "sampleday", "size.cat", "table", "tank",
                          "dat.filter", "dat.count", "observer"), 
                        summarize, 
                        sum = sum(finalcount))
@@ -900,7 +886,7 @@ watersizesums <- ddply(depwater5,
 ## sample and take the means for each sampling day
 
 waterprop <- ddply(watersizesums,
-                   c("day", "size.cat"), 
+                   c("sampleday", "size.cat"), 
                    summarize, 
                    sum = sum(sum))
 
@@ -917,13 +903,13 @@ waterprop$size.cat <- as.factor(waterprop$size.cat)
 
 ## Put the size categories in order
 
-waterprop3$size.cat <- factor(waterprop3$size.cat, 
-                                  levels = c("10-100", "100-500", "500-1000", 
-                                             "1000-5000"))
+waterprop$size.cat <- factor(waterprop$size.cat, 
+                             levels = c("10-100", "100-500", "500-1000", 
+                                        "1000-5000"))
 
 ## Now plot
 
-ggplot(waterprop3, aes(x=day, y=100*mean, fill = size.cat)) + 
+ggplot(waterprop, aes(x=sampleday, y=100*prop, fill = size.cat)) + 
   geom_col(size = 1, colour = "black") + 
   xlab("Sampling Day") + 
   ylab("Average percent") +
@@ -950,8 +936,8 @@ Now with particle type/colour
 ## First we need to make a new data frame of sums according to each particle
 ## type/colour
 
-watertypesums <- ddply(depwater5, c("id", "day", "Table", "Tank", 
-                                    "DOFSample", "dat.filter", "dat.count", 
+watertypesums <- ddply(depwater5, c("id", "sampleday", "table", "tank", 
+                                    "dat.filter", "dat.count", 
                                     "observer", "variable"), 
                         summarize, sum = sum(finalcount))
 
@@ -961,7 +947,7 @@ watertypesums <- ddply(depwater5, c("id", "day", "Table", "Tank",
 ## sample and take the means for each sampling day
 
 watertypeprop <- ddply(watertypesums,
-                        c("day", "variable"), 
+                        c("sampleday", "variable"), 
                         summarize, 
                         sum = sum(sum))
 watertypeprop$prop <- numeric(length = nrow(watertypeprop))
@@ -978,7 +964,7 @@ watertypeprop$variable <- as.factor(watertypeprop$variable)
 
 ## Now plot
 
-ggplot(watertypeprop3, aes(x=day, y=100*mean, fill = variable)) + 
+ggplot(watertypeprop, aes(x=sampleday, y=100*prop, fill = variable)) + 
   geom_col(size = 0.5, colour = "black") + 
   xlab("Sampling Day") + 
   ylab("Average percent") +
@@ -1002,13 +988,13 @@ ggplot(watertypeprop3, aes(x=day, y=100*mean, fill = variable)) +
 Take total sums and plot the results.
 
 ```{r}
-totalwatersums <- ddply(depwater5, c("id", "day", "Table", "Tank", "observer", 
-                                     "dat.filter"),
+totalwatersums <- ddply(depwater5, c("id", "sampleday", "table", "tank", 
+                                     "observer", "dat.filter"),
                    summarise, sum = sum(finalcount))  # adds all the counts together
 
 ## Plot according to count per filtration day
 
-ggplot(totalwatersums, aes(x=day, y=sum)) + 
+ggplot(totalwatersums, aes(x=sampleday, y=sum)) + 
   geom_boxplot(position=position_dodge(), size=1) + 
   xlab("Day") +
   ylab(expression(paste("# AFs"~L^-1))) +
@@ -1027,11 +1013,11 @@ Now run the same summary stats for the water samples.
 ```{r}
 ## medians, range, and SD
 
-with(totalwatersums, tapply(sum, day, median))  # takes median for each day
-with(totalwatersums, tapply(sum, day, min))  # takes minimum for each day
-with(totalwatersums, tapply(sum, day, max))  # takes maximum for each day
+with(totalwatersums, tapply(sum, sampleday, median))  # takes median for each sampleday
+with(totalwatersums, tapply(sum, sampleday, min))  # takes minimum for each sampleday
+with(totalwatersums, tapply(sum, sampleday, max))  # takes maximum for each sampleday
 with(totalwatersums, tapply(sum, 
-                       day, sd))  # takes standard deviation for each day
+                       sampleday, sd))  # takes standard deviation for each sampleday
 
 ## Proportions of particles sizes
 
@@ -1333,7 +1319,7 @@ print(algaesummarytable)
 
 ## Oyster statistics
 
-Now fit a generalized linear mixed model (GLMM) to the oyster data using the package glmmTMB to determine differences over time. We"ll specify AF count as the response variable, sampling day as the predictor, and tank nested within table as the random, or mixed, effects. You"ll notice that sample day is specified twice. The second time is to set it up as the intercept for the random effect, which will allow the linear relationship between AP sum and sampling day to vary in both slope and intercept according separately within each tank, within each table. This accounts for any the variation that may have been caused by any variables that we did not account for and may have varied somehow in different tanks and or/tables.
+Now fit a generalized linear mixed model (GLMM) to the oyster data using the package glmmTMB to determine differences over time. We"ll specify AP count as the response variable, sampling day and oyster width as predictors, and tank nested within table as the random, or mixed, effects.
 
 ```{r}
 # Gaussian
@@ -1342,16 +1328,18 @@ totalsums$sampleday <- as.character(totalsums$sampleday)
 totalsums$sampleday <- as.numeric(totalsums$sampleday)
 
 M1 <- 
-  glmmTMB(log(sum + 1) ~ sampleday + length + (1 | Table/Tank),
+  glmmTMB(log(sum + 1) ~ sampleday + width + (1 | table/tank),
           data = totalsums) ## Fits a GLMM
 
 summary(M1) # model output
 
-plot(resid(M1) ~ fitted(M1))
+plot(resid(M1) ~ fitted(M1))  # check assumptions
 abline(0,0)
 ```
 
-Sample day significant (p<0.001), oyster length not significant (p = 0.0787).
+Model assumptions seem to be met.
+
+Sample day significant (p<0.001), oyster width not significant (p = 0.08).
 
 ## Plot model predictions
 
@@ -1360,14 +1348,14 @@ predictions <-
   data.frame(sampleday = seq(from = 0,
                               to = 10,
                               length.out = 1000),
-             length = with(totalsums,
-                           sample(c(min(length),
-                                    median(length),
-                                    max(length)),
+             width = with(totalsums,
+                           sample(c(min(width),
+                                    median(width),
+                                    max(width)),
                                   1000,
                                   replace = TRUE)),
-             Table = rep(NA, 1000),
-             Tank = rep(NA, 1000))
+             table = rep(NA, 1000),  # ignore random effects
+             tank = rep(NA, 1000))
 
 new.predict <-
   predict(M1,
@@ -1380,19 +1368,19 @@ predictions$mean <- exp(new.predict$fit) - 1
 predictions$upper <- exp(with(new.predict, fit + 1.96*se.fit)) - 1
 predictions$lower <- exp(with(new.predict, fit - 1.96*se.fit)) - 1
 
-predictions$length <- as.factor(predictions$length)
+predictions$width <- as.factor(predictions$width)
 
 ggplot() +
   geom_ribbon(data = predictions,
               aes(x = sampleday,
                   ymin = lower,
                   ymax = upper,
-                  fill = length),
+                  fill = width),
               alpha = 0.5) +
   geom_line(data = predictions,
             aes(x = sampleday,
                 y = mean,
-                colour = length),
+                colour = width),
             size = 1) +
   geom_point(data = totalsums,
              aes(x = sampleday,
@@ -1400,39 +1388,12 @@ ggplot() +
              size = 0.75) +
   scale_colour_brewer(type = "qual",
                       palette = "Set2",
-                      name = "Length (mm)") +
+                      name = "Width (mm)") +
 
   scale_fill_brewer(type = "qual",
                     palette = "Set2",
-                    name = "Length (mm)") +
+                    name = "Width (mm)") +
   labs(x = "Day",
        y = "Number of anthropogenic particles") +
   theme1
-```
-
-
-
-
-
-
-
-
-
-
-Run tests to determine whether there were significant differences in AP size according to day.
-
-```{r}
-SM1 <- glmmTMB(prop ~ size.cat*sampleday + (1 | Table/Tank), family = binomial, 
-               data = oysterprop5)
-summary(SM1)
-plot(resid(SM1) ~ fitted(SM1))
-
-SM5 <- glmmTMB(prop ~ size.cat + sampleday + (1 | Table/Tank), family = binomial, 
-               data = oysterprop5)
-
-anova(SM1, SM5)  # interaction is signficant at p = 0.04
-
-ggplot(oysterprop5) +
-  geom_violin(aes(x = sampleday, y = prop)) +
-  facet_wrap(~ size.cat)
 ```

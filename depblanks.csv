@@ -1,4 +1,4 @@
-id,sampleday,size.cat,DOFSample,time.in.oven,time.out.oven,dat.filter,dat.count,observer,red.fib,yell.fib,green.fib,turq.fib,blu.fib,purp.fib,gray.fib,clear.fib,pink.fib,brown.fib,orang.fib,black.fib,red.frag,yell.frag,green.frag,turq.frag,blu.frag,purp.frag,gray.frag,clear.frag,pink.frag,brown.frag,orang.frag,black.frag,whit.spher,clear.spher
+id,sampleday,size.cat,blankrun,time.in.oven,time.out.oven,dat.filter,dat.count,observer,red.fib,yell.fib,green.fib,turq.fib,blu.fib,purp.fib,gray.fib,clear.fib,pink.fib,brown.fib,orang.fib,black.fib,red.frag,yell.frag,green.frag,turq.frag,blu.frag,purp.frag,gray.frag,clear.frag,pink.frag,brown.frag,orang.frag,black.frag,whit.spher,clear.spher
 "MControl1 (0,1)",0,twentyto50,1,2016-11-05/ 17:03,2016-11-10/18:00,11-17-2016,11-24-2016,GC,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 "MControl1 (0,1)",0,fiftyto100,1,2016-11-05/ 17:03,2016-11-10/18:00,11-17-2016,11-24-2016,GC,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 "MControl1 (0,1)",0,onehundredto500,1,2016-11-05/ 17:03,2016-11-10/18:00,11-17-2016,11-24-2016,GC,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
