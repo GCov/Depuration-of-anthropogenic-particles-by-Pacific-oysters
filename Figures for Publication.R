@@ -149,11 +149,11 @@ ggplot() +
              shape = 21) +
   scale_colour_brewer(type = "qual",
                       palette = "Set2",
-                      name = "Oyster Shell \nWidth (mm)") +
+                      name = "Oyster Shell \nHeight (mm)") +
   
   scale_fill_brewer(type = "qual",
                     palette = "Set2",
-                    name = "Oyster Shell \nWidth (mm)") +
+                    name = "Oyster Shell \nHeight (mm)") +
   scale_x_continuous(breaks = c(0, 1, 3, 5, 10)) +
   labs(x = "Day",
        y = expression(paste("APs"~ind^-1))) +
