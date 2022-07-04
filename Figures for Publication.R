@@ -1,4 +1,5 @@
 library(cowplot)
+library(RColorBrewer)
 
 theme1 <-
   theme_bw() +
@@ -147,12 +148,10 @@ ggplot() +
                  y = sum),
              size = 0.75,
              shape = 21) +
-  scale_colour_brewer(type = "qual",
-                      palette = "Set2",
+  scale_colour_manual(values = c("#747c92", "#94c595", "#a1e8af"),
                       name = "Oyster Shell \nHeight (mm)") +
   
-  scale_fill_brewer(type = "qual",
-                    palette = "Set2",
+  scale_fill_manual(values = c("#747c92", "#94c595", "#a1e8af"),
                     name = "Oyster Shell \nHeight (mm)") +
   scale_x_continuous(breaks = c(0, 1, 3, 5, 10)) +
   labs(x = "Day",
